@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Jobs\SyncAppointmentToGoogleCalendar;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
@@ -118,6 +119,8 @@ class AppointmentController extends Controller
             report($e);
             abort(503, 'No se pudo confirmar. Intenta nuevamente.');
         }
+
+        SyncAppointmentToGoogleCalendar::dispatch($id);
 
         return response()->json([
             'message' => 'Reserva confirmada',
