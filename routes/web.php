@@ -23,3 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/google/connect/{professional}', [\App\Http\Controllers\GoogleCalendarController::class, 'redirect'])->name('google.connect');
     Route::get('/google/callback', [\App\Http\Controllers\GoogleCalendarController::class, 'callback'])->name('google.callback');
 });
+
+Route::get('/agenda', [\App\Http\Controllers\AgendaController::class, 'index'])
+    ->middleware('auth')
+    ->name('agenda.index');
