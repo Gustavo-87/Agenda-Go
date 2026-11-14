@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+#[Fillable(['name', 'slug', 'sector', 'email', 'phone', 'active'])]
+class Business extends Model
+{
+    /** @use HasFactory<BusinessFactory> */
+    use HasFactory;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+        ];
+    }
+
+    /**
+     * @return HasMany<Professional, $this>
+     */
+    public function professionals(): HasMany
+    {
+        return $this->hasMany(Professional::class);
+    }
+
+    /**
+     * @return HasMany<Service, $this>
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    /**
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+}
