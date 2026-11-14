@@ -129,3 +129,14 @@ continúan pendientes.
 
 La siguiente etapa será elaborar requisitos trazables,
 criterios de aceptación, arquitectura y plan de sprints.
+
+## 14. Alcance multisectorial de AgendaNails
+
+- AgendaNails será una plataforma SaaS de reservas para negocios de servicios.
+- No estará limitada a manicura o servicios de uñas.
+- Podrá utilizarse en peluquerías, barberías, centros de estética y otros negocios que operen mediante citas.
+- Viglam será el primer cliente y caso de validación comercial.
+- Los modelos de datos utilizarán conceptos generales: negocio, profesional, servicio, cliente y reserva.
+- Cada negocio configurará sus propios servicios, duraciones, precios, horarios y profesionales.
+- Las funcionalidades compartidas no dependerán de un sector específico.
+- Las características particulares de cada actividad se manejarán mediante configuraciones cuando sea necesario.
