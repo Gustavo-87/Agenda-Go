@@ -13,3 +13,6 @@ Route::get('/webhooks/whatsapp',
 
 Route::post('/webhooks/whatsapp',
     [\App\Http\Controllers\WhatsAppWebhookController::class, 'receive']);
+
+Route::post('/whatsapp/flows',
+    [\App\Http\Controllers\WhatsAppFlowController::class, 'handle']);

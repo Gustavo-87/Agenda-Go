@@ -83,7 +83,7 @@ class WhatsAppWebhookController extends Controller
                             'to' => $phone,
                             'type' => 'text',
                             'text' => [
-                                'body' => '¡Hola! Bienvenida a AgendaNails. ¿Deseas agendar una cita?',
+                                'body' => app(\App\Services\ReservaWhatsAppService::class)->procesar($phone, $message['text']['body'] ?? ''),
                             ],
                         ]
                     );

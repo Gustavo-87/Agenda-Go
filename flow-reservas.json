@@ -1,0 +1,362 @@
+{
+    "version": "7.3",
+    "data_api_version": "3.0",
+    "routing_model": {
+        "APPOINTMENT": [
+            "DETAILS"
+        ],
+        "DETAILS": [
+            "SUMMARY"
+        ],
+        "SUMMARY": [
+            "SUCCESS"
+        ],
+        "SUCCESS": []
+    },
+    "screens": [
+        {
+            "id": "APPOINTMENT",
+            "title": "AgendaNails · Reserva",
+            "data": {
+                "profesionales": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "1",
+                            "title": "Laura Nails"
+                        }
+                    ]
+                },
+                "servicios": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "1",
+                            "title": "Semipermanente · $45.000"
+                        }
+                    ]
+                },
+                "habilitar_servicios": {
+                    "type": "boolean",
+                    "__example__": false
+                },
+                "habilitar_fecha": {
+                    "type": "boolean",
+                    "__example__": false
+                },
+                "fecha_minima": {
+                    "type": "string",
+                    "__example__": "2026-11-14"
+                },
+                "fecha_maxima": {
+                    "type": "string",
+                    "__example__": "2026-12-14"
+                },
+                "fechas_no_disponibles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "__example__": []
+                },
+                "horarios": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "09:00",
+                            "title": "09:00"
+                        }
+                    ]
+                },
+                "habilitar_horarios": {
+                    "type": "boolean",
+                    "__example__": false
+                },
+                "aviso": {
+                    "type": "string",
+                    "__example__": "Primero selecciona una profesional y un servicio."
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "reserva",
+                        "children": [
+                            {
+                                "type": "Dropdown",
+                                "label": "Profesional",
+                                "name": "profesional",
+                                "data-source": "${data.profesionales}",
+                                "required": true,
+                                "on-select-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "accion": "profesional",
+                                        "profesional": "${form.profesional}"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Servicio",
+                                "name": "servicio",
+                                "data-source": "${data.servicios}",
+                                "enabled": "${data.habilitar_servicios}",
+                                "required": "${data.habilitar_servicios}",
+                                "on-select-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "accion": "servicio",
+                                        "profesional": "${form.profesional}",
+                                        "servicio": "${form.servicio}"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "CalendarPicker",
+                                "name": "fecha",
+                                "label": "Selecciona la fecha",
+                                "mode": "single",
+                                "required": "${data.habilitar_fecha}",
+                                "enabled": "${data.habilitar_fecha}",
+                                "min-date": "${data.fecha_minima}",
+                                "max-date": "${data.fecha_maxima}",
+                                "unavailable-dates": "${data.fechas_no_disponibles}",
+                                "on-select-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "accion": "fecha",
+                                        "profesional": "${form.profesional}",
+                                        "servicio": "${form.servicio}",
+                                        "fecha": "${form.fecha}"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Dropdown",
+                                "label": "Hora disponible",
+                                "name": "hora",
+                                "data-source": "${data.horarios}",
+                                "enabled": "${data.habilitar_horarios}",
+                                "required": "${data.habilitar_horarios}"
+                            },
+                            {
+                                "type": "TextBody",
+                                "text": "${data.aviso}"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continuar",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": {
+                                        "type": "screen",
+                                        "name": "DETAILS"
+                                    },
+                                    "payload": {
+                                        "profesional": "${form.profesional}",
+                                        "servicio": "${form.servicio}",
+                                        "fecha": "${form.fecha}",
+                                        "hora": "${form.hora}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "DETAILS",
+            "title": "Tus datos",
+            "data": {
+                "profesional": {
+                    "type": "string",
+                    "__example__": "1"
+                },
+                "servicio": {
+                    "type": "string",
+                    "__example__": "1"
+                },
+                "fecha": {
+                    "type": "string",
+                    "__example__": "2026-11-16"
+                },
+                "hora": {
+                    "type": "string",
+                    "__example__": "09:00"
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "datos",
+                        "children": [
+                            {
+                                "type": "TextInput",
+                                "name": "nombre",
+                                "label": "Nombre completo",
+                                "required": true
+                            },
+                            {
+                                "type": "TextInput",
+                                "name": "telefono",
+                                "label": "Celular",
+                                "input-type": "phone",
+                                "required": true
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Revisar reserva",
+                                "on-click-action": {
+                                    "name": "data_exchange",
+                                    "payload": {
+                                        "accion": "revisar",
+                                        "profesional": "${data.profesional}",
+                                        "servicio": "${data.servicio}",
+                                        "fecha": "${data.fecha}",
+                                        "hora": "${data.hora}",
+                                        "nombre": "${form.nombre}",
+                                        "telefono": "${form.telefono}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "SUMMARY",
+            "title": "Confirmar reserva",
+            "data": {
+                "resumen": {
+                    "type": "string",
+                    "__example__": "Laura Nails · Semipermanente · 2026-11-16, 09:00"
+                },
+                "profesional": {
+                    "type": "string",
+                    "__example__": "1"
+                },
+                "servicio": {
+                    "type": "string",
+                    "__example__": "1"
+                },
+                "fecha": {
+                    "type": "string",
+                    "__example__": "2026-11-16"
+                },
+                "hora": {
+                    "type": "string",
+                    "__example__": "09:00"
+                },
+                "nombre": {
+                    "type": "string",
+                    "__example__": "Cliente de prueba"
+                },
+                "telefono": {
+                    "type": "string",
+                    "__example__": "573001112233"
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextHeading",
+                        "text": "Comprueba tu cita"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "${data.resumen}"
+                    },
+                    {
+                        "type": "Footer",
+                        "label": "Confirmar cita",
+                        "on-click-action": {
+                            "name": "data_exchange",
+                            "payload": {
+                                "accion": "confirmar",
+                                "profesional": "${data.profesional}",
+                                "servicio": "${data.servicio}",
+                                "fecha": "${data.fecha}",
+                                "hora": "${data.hora}",
+                                "nombre": "${data.nombre}",
+                                "telefono": "${data.telefono}"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "SUCCESS",
+            "title": "Reserva confirmada",
+            "terminal": true,
+            "data": {
+                "mensaje": {
+                    "type": "string",
+                    "__example__": "Tu cita está confirmada. ¡Te esperamos!"
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextHeading",
+                        "text": "¡Reserva confirmada!"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "${data.mensaje}"
+                    },
+                    {
+                        "type": "Footer",
+                        "label": "Finalizar",
+                        "on-click-action": {
+                            "name": "complete",
+                            "payload": {}
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
