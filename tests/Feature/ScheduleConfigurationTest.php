@@ -207,7 +207,7 @@ class ScheduleConfigurationTest extends TestCase
         $this->assertDatabaseHas('schedule_exceptions', ['id' => $exception->id]);
     }
 
-    public function test_a_super_admin_can_configure_schedules_of_any_business(): void
+    public function test_a_super_admin_cannot_configure_schedules_of_any_business(): void
     {
         $professional = $this->professionalOf(Business::factory()->create(), 'Laura');
         $superAdmin = User::factory()->create(['role' => UserRole::SuperAdmin]);
@@ -218,6 +218,6 @@ class ScheduleConfigurationTest extends TestCase
                 'start_time' => '09:00',
                 'end_time' => '18:00',
             ])
-            ->assertStatus(201);
+            ->assertStatus(403);
     }
 }

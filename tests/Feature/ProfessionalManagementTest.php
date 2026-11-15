@@ -63,7 +63,7 @@ class ProfessionalManagementTest extends TestCase
         ]);
     }
 
-    public function test_a_super_admin_can_create_a_professional_for_any_business(): void
+    public function test_a_super_admin_cannot_create_professionals(): void
     {
         $business = Business::factory()->create();
         $superAdmin = User::factory()->create(['role' => UserRole::SuperAdmin]);
@@ -73,12 +73,9 @@ class ProfessionalManagementTest extends TestCase
                 'name' => 'Laura',
                 'business_id' => $business->id,
             ])
-            ->assertStatus(201);
+            ->assertStatus(403);
 
-        $this->assertDatabaseHas('professionals', [
-            'name' => 'Laura',
-            'business_id' => $business->id,
-        ]);
+        $this->assertDatabaseCount('professionals', 0);
     }
 
     public function test_a_business_cannot_exceed_five_active_professionals(): void
@@ -181,7 +178,7 @@ class ProfessionalManagementTest extends TestCase
         ]);
     }
 
-    public function test_a_super_admin_can_modify_professionals_of_any_business(): void
+    public function test_a_super_admin_cannot_modify_professionals_of_any_business(): void
     {
         $business = Business::factory()->create();
         $professional = $this->professionalOf($business, 'Laura');
@@ -189,12 +186,7 @@ class ProfessionalManagementTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->patchJson("/professionals/{$professional->id}", ['name' => 'Laura Gómez'])
-            ->assertStatus(200);
-
-        $this->assertDatabaseHas('professionals', [
-            'id' => $professional->id,
-            'name' => 'Laura Gómez',
-        ]);
+            ->assertStatus(403);
     }
 
     public function test_a_professional_role_user_cannot_manage_professionals(): void

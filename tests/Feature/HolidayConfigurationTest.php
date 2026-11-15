@@ -96,13 +96,13 @@ class HolidayConfigurationTest extends TestCase
         $this->assertDatabaseMissing('holidays', ['id' => $holiday->id]);
     }
 
-    public function test_a_super_admin_can_configure_holidays_of_any_business(): void
+    public function test_a_super_admin_cannot_configure_holidays_of_any_business(): void
     {
         $business = Business::factory()->create();
         $superAdmin = User::factory()->create(['role' => UserRole::SuperAdmin]);
 
         $this->actingAs($superAdmin)
             ->postJson("/businesses/{$business->id}/holidays", ['date' => '2026-12-08'])
-            ->assertStatus(201);
+            ->assertStatus(403);
     }
 }

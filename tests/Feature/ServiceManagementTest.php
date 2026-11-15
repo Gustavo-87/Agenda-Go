@@ -127,7 +127,7 @@ class ServiceManagementTest extends TestCase
         ]);
     }
 
-    public function test_a_super_admin_can_manage_services_of_any_business(): void
+    public function test_a_super_admin_cannot_manage_services_of_any_business(): void
     {
         $business = Business::factory()->create();
         $professional = $this->professionalOf($business, 'Laura');
@@ -140,9 +140,7 @@ class ServiceManagementTest extends TestCase
                 'price' => 90000,
                 'professional_id' => $professional->id,
             ])
-            ->assertStatus(201);
-
-        $this->assertDatabaseHas('services', ['name' => 'Manos y pies']);
+            ->assertStatus(403);
     }
 
     public function test_a_service_can_be_deactivated(): void

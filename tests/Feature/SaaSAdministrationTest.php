@@ -218,6 +218,74 @@ class SaaSAdministrationTest extends TestCase
             ->assertDontSee('Cliente Ajeno');
     }
 
+    public function test_super_admin_cannot_operate_business_resources(): void
+    {
+        $business = Business::factory()->create();
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        $super = $this->superAdmin();
+
+        $this->actingAs($super)
+            ->postJson('/professionals', ['name' => 'X'])
+            ->assertStatus(403);
+
+        $this->actingAs($super)
+            ->postJson("/businesses/{$business->id}/services", [
+                'name' => 'Servicio',
+                'duration_minutes' => 60,
+                'price' => 50000,
+                'professional_id' => $professional->id,
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($super)
+            ->postJson("/professionals/{$professional->id}/schedules", [
+                'weekday' => 0,
+                'start_time' => '09:00',
+                'end_time' => '13:00',
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($super)
+            ->getJson("/businesses/{$business->id}/reports/summary?from=2026-11-01&to=2026-11-30")
+            ->assertStatus(403);
+
+        $this->actingAs($super)
+            ->postJson("/businesses/{$business->id}/payments", ['amount' => 50000, 'paid_on' => '2026-11-15'])
+            ->assertStatus(403);
+    }
+
+    public function test_professionals_can_update_their_own_contact_data(): void
+    {
+        $business = Business::factory()->create();
+        $ownUser = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => UserRole::Professional,
+        ]);
+        $professional = Professional::create([
+            'name' => 'Stefania',
+            'business_id' => $business->id,
+            'user_id' => $ownUser->id,
+        ]);
+        $stranger = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => UserRole::Professional,
+        ]);
+
+        $this->actingAs($stranger)
+            ->patchJson("/professionals/{$professional->id}/contact", ['name' => 'Hack', 'phone' => '300'])
+            ->assertStatus(403);
+
+        $this->actingAs($ownUser)
+            ->patchJson("/professionals/{$professional->id}/contact", ['name' => 'Stefania Rojas', 'phone' => '3100000000'])
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('professionals', [
+            'id' => $professional->id,
+            'name' => 'Stefania Rojas',
+            'phone' => '3100000000',
+        ]);
+    }
+
     public function test_the_profile_page_is_displayed_in_spanish(): void
     {
         $user = User::factory()->create(['role' => UserRole::Professional]);
