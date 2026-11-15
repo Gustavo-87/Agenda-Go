@@ -133,6 +133,13 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Dashboard del administrador con indicadores del negocio; dashboard del profesional limitado a su agenda.
 - Interfaz traducida al español de Colombia, incluido el perfil y las vistas de autenticación (`lang/es_CO.json`).
 
+### Seguridad de gestión SaaS
+
+- Principio de mínimo privilegio: `BusinessPolicy` exige membresía del negocio (el superadministrador ya no opera citas, clientes, servicios, horarios, pagos ni reportes de los clientes; conserva sus funciones de plataforma y de soporte de integraciones).
+- Invitaciones seguras por correo para administradores y profesionales: token aleatorio almacenado con hash SHA-256, vigencia de 48 horas, un solo uso y establecimiento de contraseña por el invitado.
+- El superadministrador invita administradores y profesionales; la administración de un negocio solo invita profesionales de su propio negocio.
+- Edición de datos de contacto del profesional desde Configuración (por la propia profesional o su administración).
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
