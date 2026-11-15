@@ -9,6 +9,8 @@ class AgendaController extends Controller
 {
     public function index(Request $request)
     {
+        abort_if($request->user()->isSuperAdmin(), 403);
+
         $data = $request->validate([
             'date' => ['nullable', 'date_format:Y-m-d'],
             'vista' => ['nullable', 'in:dia,semana'],

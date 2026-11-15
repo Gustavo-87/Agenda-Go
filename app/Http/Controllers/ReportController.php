@@ -37,7 +37,7 @@ class ReportController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->isAdmin() || $user->isSuperAdmin(), 403);
+        abort_unless($user->isAdmin(), 403);
 
         $business = $this->contextoNegocio($request);
 

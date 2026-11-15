@@ -13,6 +13,8 @@ class CustomerController extends Controller
      */
     public function pantalla(Request $request)
     {
+        abort_if($request->user()->isSuperAdmin(), 403);
+
         $user = $request->user();
         $business = $this->contextoNegocio($request);
         $q = trim((string) $request->query('q', ''));
@@ -47,6 +49,7 @@ class CustomerController extends Controller
 
     public function show(Request $request, Customer $customer)
     {
+        abort_if($request->user()->isSuperAdmin(), 403);
         abort_unless($customer->business !== null && $request->user()->can('view', $customer->business), 403);
 
         $historial = $customer->appointments()->orderByDesc('starts_at')->get();

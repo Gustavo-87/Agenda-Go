@@ -56,6 +56,10 @@ abstract class Controller
 
         $query = Appointment::query()->with(['professional', 'service']);
 
+        if ($user->isSuperAdmin()) {
+            return $query->whereNull('appointments.id');
+        }
+
         if ($business !== null && $user->can('manage', $business)) {
             return $query->where('business_id', $business->id);
         }

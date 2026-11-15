@@ -13,26 +13,30 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Panel') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')">
-                        {{ __('Agenda') }}
-                    </x-nav-link>
-                    @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                        <x-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')">
-                            {{ __('Gestión') }}
-                        </x-nav-link>
-                    @endif
-                    <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')">
-                        {{ __('Clientes') }}
-                    </x-nav-link>
-                    @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                        <x-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')">
-                            {{ __('Reportes') }}
-                        </x-nav-link>
-                    @endif
                     @if (Auth::user()->isSuperAdmin())
                         <x-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')">
-                            {{ __('Administración') }}
+                            {{ __('Negocios') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.memberships')" :active="request()->routeIs('admin.memberships')">
+                            {{ __('Membresías') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')">
+                            {{ __('Agenda') }}
+                        </x-nav-link>
+                        @if (Auth::user()->isAdmin())
+                            <x-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')">
+                                {{ __('Gestión') }}
+                            </x-nav-link>
+                        @endif
+                        <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')">
+                            {{ __('Clientes') }}
+                        </x-nav-link>
+                        @if (Auth::user()->isAdmin())
+                            <x-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')">
+                                {{ __('Reportes') }}
+                            </x-nav-link>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -41,7 +45,7 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition">
+                        <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition">
                             <span class="w-8 h-8 rounded-full bg-turquoise-600 text-white flex items-center justify-center text-xs font-bold">
                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                             </span>
@@ -90,26 +94,30 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="chart">
                 {{ __('Panel') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')" icon="calendar">
-                {{ __('Agenda') }}
-            </x-responsive-nav-link>
-            @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')" icon="briefcase">
-                    {{ __('Gestión') }}
-                </x-responsive-nav-link>
-            @endif
-            <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')" icon="users">
-                {{ __('Clientes') }}
-            </x-responsive-nav-link>
-            @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')" icon="money">
-                    {{ __('Reportes') }}
-                </x-responsive-nav-link>
-            @endif
             @if (Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')" icon="shield">
-                    {{ __('Administración') }}
+                <x-responsive-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')" icon="briefcase">
+                    {{ __('Negocios') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.memberships')" :active="request()->routeIs('admin.memberships')" icon="money">
+                    {{ __('Membresías') }}
+                </x-responsive-nav-link>
+            @else
+                <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')" icon="calendar">
+                    {{ __('Agenda') }}
+                </x-responsive-nav-link>
+                @if (Auth::user()->isAdmin())
+                    <x-responsive-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')" icon="briefcase">
+                        {{ __('Gestión') }}
+                    </x-responsive-nav-link>
+                @endif
+                <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')" icon="users">
+                    {{ __('Clientes') }}
+                </x-responsive-nav-link>
+                @if (Auth::user()->isAdmin())
+                    <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')" icon="money">
+                        {{ __('Reportes') }}
+                    </x-responsive-nav-link>
+                @endif
             @endif
             <x-responsive-nav-link :href="route('configuracion.index')" :active="request()->routeIs('configuracion.index')" icon="cog">
                 {{ __('Configuración') }}
