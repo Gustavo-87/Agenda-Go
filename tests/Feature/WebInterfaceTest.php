@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\Appointment;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Professional;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -169,5 +171,103 @@ class WebInterfaceTest extends TestCase
         $admin = $this->adminOf($business);
 
         $this->actingAs($admin)->get('/agenda')->assertOk()->assertSee('Agenda');
+    }
+
+    public function test_the_week_view_renders_for_the_agenda(): void
+    {
+        $business = Business::factory()->create();
+
+        $this->actingAs($this->adminOf($business))
+            ->get('/agenda?vista=semana')
+            ->assertOk()
+            ->assertSee('Semana');
+    }
+
+    public function test_services_can_be_edited_from_the_management_screen(): void
+    {
+        $business = Business::factory()->create();
+        $admin = $this->adminOf($business);
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        $service = Service::create([
+            'name' => 'Semipermanente',
+            'duration_minutes' => 60,
+            'price' => 50000,
+            'professional_id' => $professional->id,
+            'business_id' => $business->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->from('/gestion')
+            ->patch('/services/'.$service->id, [
+                'name' => 'Manos y pies',
+                'duration_minutes' => 90,
+                'price' => 70000,
+                'professional_id' => $professional->id,
+            ])
+            ->assertRedirect('/gestion')
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('services', [
+            'id' => $service->id,
+            'name' => 'Manos y pies',
+            'duration_minutes' => 90,
+            'price' => 70000,
+        ]);
+    }
+
+    public function test_users_without_a_business_see_friendly_states(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Professional]);
+
+        $this->actingAs($user)->get('/clientes')->assertOk()->assertSee('No tienes un negocio asignado');
+        $this->actingAs($user)->get('/configuracion')->assertOk()->assertSee('Seguridad de la cuenta');
+    }
+
+    public function test_super_admin_can_select_a_business_context(): void
+    {
+        $business = Business::factory()->create();
+        Customer::create([
+            'business_id' => $business->id,
+            'name' => 'Carla',
+            'phone' => '300',
+        ]);
+        $super = User::factory()->create(['role' => UserRole::SuperAdmin]);
+
+        $this->actingAs($super)->get('/clientes')->assertOk()->assertSee('Selecciona un negocio');
+
+        $this->actingAs($super)
+            ->get('/clientes?business_id='.$business->id)
+            ->assertOk()
+            ->assertSee('Carla');
+    }
+
+    public function test_the_admin_agenda_shows_the_whole_business(): void
+    {
+        $business = Business::factory()->create();
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        $service = Service::create([
+            'name' => 'Semipermanente',
+            'duration_minutes' => 60,
+            'price' => 50000,
+            'professional_id' => $professional->id,
+            'business_id' => $business->id,
+        ]);
+        $fecha = now('America/Bogota')->addDays(3)->format('Y-m-d');
+
+        Appointment::forceCreate([
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'business_id' => $business->id,
+            'customer_name' => 'Cliente Global',
+            'customer_phone' => '300',
+            'starts_at' => "{$fecha} 09:00:00",
+            'ends_at' => "{$fecha} 10:00:00",
+            'status' => 'confirmed',
+        ]);
+
+        $this->actingAs($this->adminOf($business))
+            ->get('/agenda?date='.$fecha)
+            ->assertOk()
+            ->assertSee('Cliente Global');
     }
 }
