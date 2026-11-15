@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Throwable;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -41,7 +42,13 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('web')->logout();
             $request->session()->regenerate();
 
-            $user->notify(new TwoFactorCode($codigo));
+            try {
+                $user->notify(new TwoFactorCode($codigo));
+            } catch (Throwable $e) {
+                // El desafío continúa aunque el transporte de correo
+                // falle; el código puede recuperarse en desarrollo.
+                report($e);
+            }
 
             return redirect()->route('2fa.show');
         }
