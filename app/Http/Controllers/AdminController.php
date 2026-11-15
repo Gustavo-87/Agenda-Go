@@ -15,6 +15,20 @@ use Illuminate\Http\Request;
  */
 class AdminController extends Controller
 {
+    /**
+     * Panel del superadministrador: negocios, membresías y pagos.
+     */
+    public function pantalla(Request $request)
+    {
+        $this->assertSuperAdmin($request);
+
+        return view('admin.index', [
+            'negocios' => Business::with('memberships')->orderBy('id')->get(),
+            'pagosPendientes' => MembershipPayment::where('verified', false)
+                ->with('business')->orderByDesc('id')->limit(10)->get(),
+        ]);
+    }
+
     public function businesses(Request $request)
     {
         $this->assertSuperAdmin($request);
@@ -38,10 +52,7 @@ class AdminController extends Controller
 
         $business = Business::create($data);
 
-        return response()->json([
-            'message' => 'Negocio registrado',
-            'business_id' => $business->id,
-        ], 201);
+        return $this->respuesta($request, 'Negocio registrado', ['business_id' => $business->id], 201);
     }
 
     public function activate(Request $request, Business $business)
@@ -51,7 +62,7 @@ class AdminController extends Controller
         $business->update(['active' => true]);
         AuditLog::registrar($request->user(), 'negocio.activado', $business);
 
-        return response()->json(['message' => 'Negocio activado']);
+        return $this->respuesta($request, 'Negocio activado');
     }
 
     public function suspend(Request $request, Business $business)
@@ -62,7 +73,7 @@ class AdminController extends Controller
         $business->memberships()->update(['status' => 'suspended']);
         AuditLog::registrar($request->user(), 'negocio.suspendido', $business);
 
-        return response()->json(['message' => 'Negocio suspendido']);
+        return $this->respuesta($request, 'Negocio suspendido');
     }
 
     public function registerMembership(Request $request, Business $business)
@@ -95,8 +106,7 @@ class AdminController extends Controller
             'reference' => $data['reference'] ?? null,
         ]);
 
-        return response()->json([
-            'message' => 'Membresía registrada',
+        return $this->respuesta($request, 'Membresía registrada', [
             'membership_id' => $membership->id,
             'payment_id' => $payment->id,
         ], 201);
@@ -133,8 +143,7 @@ class AdminController extends Controller
             'reference' => $data['reference'] ?? null,
         ]);
 
-        return response()->json([
-            'message' => 'Membresía renovada',
+        return $this->respuesta($request, 'Membresía renovada', [
             'membership_id' => $nueva->id,
             'payment_id' => $payment->id,
         ], 201);
@@ -149,7 +158,7 @@ class AdminController extends Controller
         $payment->business->update(['active' => true]);
         AuditLog::registrar($request->user(), 'pago.membresia.verificado', $payment);
 
-        return response()->json(['message' => 'Pago verificado y servicio habilitado']);
+        return $this->respuesta($request, 'Pago verificado y servicio habilitado');
     }
 
     private function assertSuperAdmin(Request $request): void

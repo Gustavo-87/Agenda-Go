@@ -48,6 +48,6 @@ class TwoFactorController extends Controller
             'two_factor_enabled' => (bool) $data['two_factor_enabled'],
         ]);
 
-        return response()->json(['message' => 'Configuración de dos factores actualizada']);
+        return $this->respuesta($request, 'Configuración de dos factores actualizada');
     }
 }

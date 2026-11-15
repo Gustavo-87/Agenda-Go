@@ -5,6 +5,7 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\PaymentController;
@@ -21,9 +22,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -124,6 +125,12 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         ->name('reports.appointments.xlsx');
     Route::get('/businesses/{business}/reports/appointments.pdf', [ReportController::class, 'appointmentsPdf'])
         ->name('reports.appointments.pdf');
+
+    Route::get('/gestion', [ProfessionalController::class, 'pantalla'])->name('gestion.index');
+    Route::get('/clientes', [CustomerController::class, 'pantalla'])->name('clientes.index');
+    Route::get('/reportes', [ReportController::class, 'pantalla'])->name('reportes.index');
+    Route::get('/configuracion', [BusinessController::class, 'pantalla'])->name('configuracion.index');
+    Route::get('/admin', [AdminController::class, 'pantalla'])->name('admin.pantalla');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');

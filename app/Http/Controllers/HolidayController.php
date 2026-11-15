@@ -36,10 +36,7 @@ class HolidayController extends Controller
             'business_id' => $business->id,
         ]);
 
-        return response()->json([
-            'message' => 'Festivo configurado',
-            'holiday_id' => $holiday->id,
-        ], 201);
+        return $this->respuesta($request, 'Festivo configurado', ['holiday_id' => $holiday->id], 201);
     }
 
     public function destroy(Request $request, Holiday $holiday)
@@ -48,6 +45,6 @@ class HolidayController extends Controller
 
         $holiday->delete();
 
-        return response()->json(['message' => 'Festivo eliminado']);
+        return $this->respuesta($request, 'Festivo eliminado');
     }
 }

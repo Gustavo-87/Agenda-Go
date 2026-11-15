@@ -42,10 +42,7 @@ class ServiceController extends Controller
             'business_id' => $business->id,
         ]);
 
-        return response()->json([
-            'message' => 'Servicio creado',
-            'service_id' => $service->id,
-        ], 201);
+        return $this->respuesta($request, 'Servicio creado', ['service_id' => $service->id], 201);
     }
 
     public function update(Request $request, Service $service)
@@ -65,7 +62,7 @@ class ServiceController extends Controller
 
         $service->update($data);
 
-        return response()->json(['message' => 'Servicio actualizado']);
+        return $this->respuesta($request, 'Servicio actualizado');
     }
 
     public function toggle(Request $request, Service $service)
@@ -74,10 +71,9 @@ class ServiceController extends Controller
 
         $service->update(['active' => ! $service->active]);
 
-        return response()->json([
-            'message' => $service->active ? 'Servicio activado' : 'Servicio desactivado',
-            'active' => $service->active,
-        ]);
+        $mensaje = $service->active ? 'Servicio activado' : 'Servicio desactivado';
+
+        return $this->respuesta($request, $mensaje, ['active' => $service->active]);
     }
 
     /**

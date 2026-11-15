@@ -8,6 +8,25 @@ use Illuminate\Http\Request;
 class BusinessController extends Controller
 {
     /**
+     * Configuración del negocio y de la cuenta del usuario.
+     */
+    public function pantalla(Request $request)
+    {
+        $user = $request->user();
+
+        $business = $user->isSuperAdmin()
+            ? Business::find((int) $request->query('business_id', $user->business_id))
+            : $user->business;
+
+        abort_unless($business !== null && $user->can('view', $business), 403);
+
+        return view('settings.index', [
+            'negocio' => $business,
+            'puedeGestionar' => $user->can('manage', $business),
+        ]);
+    }
+
+    /**
      * RN-020 / RN-021 / RN-022: políticas de reserva del negocio.
      */
     public function updateBookingPolicy(Request $request, Business $business)
@@ -23,6 +42,6 @@ class BusinessController extends Controller
 
         $business->update($data);
 
-        return response()->json(['message' => 'Política de reservas actualizada']);
+        return $this->respuesta($request, 'Política de reservas actualizada');
     }
 }

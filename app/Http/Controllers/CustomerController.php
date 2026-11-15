@@ -8,6 +8,25 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    /**
+     * Listado de clientes del negocio.
+     */
+    public function pantalla(Request $request)
+    {
+        $user = $request->user();
+
+        $business = $user->isSuperAdmin()
+            ? Business::find((int) $request->query('business_id', $user->business_id))
+            : $user->business;
+
+        abort_unless($business !== null && $user->can('view', $business), 403);
+
+        return view('customers.index', [
+            'negocio' => $business,
+            'clientes' => $business->customers()->orderBy('name')->get(),
+        ]);
+    }
+
     public function index(Request $request, Business $business)
     {
         abort_unless($request->user()->can('view', $business), 403);
@@ -21,9 +40,18 @@ class CustomerController extends Controller
     {
         abort_unless($customer->business !== null && $request->user()->can('view', $customer->business), 403);
 
-        return response()->json([
-            'data' => $customer,
-            'historial' => $customer->appointments()->orderByDesc('starts_at')->get(),
+        $historial = $customer->appointments()->orderByDesc('starts_at')->get();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => $customer,
+                'historial' => $historial,
+            ]);
+        }
+
+        return view('customers.show', [
+            'cliente' => $customer,
+            'historial' => $historial,
         ]);
     }
 
@@ -41,6 +69,6 @@ class CustomerController extends Controller
             'data_consent_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Consentimiento registrado']);
+        return $this->respuesta($request, 'Consentimiento registrado');
     }
 }

@@ -34,10 +34,7 @@ class WorkScheduleController extends Controller
             'professional_id' => $professional->id,
         ]);
 
-        return response()->json([
-            'message' => 'Horario configurado',
-            'schedule_id' => $schedule->id,
-        ], 201);
+        return $this->respuesta($request, 'Horario configurado', ['schedule_id' => $schedule->id], 201);
     }
 
     public function destroy(Request $request, WorkSchedule $schedule)
@@ -46,6 +43,6 @@ class WorkScheduleController extends Controller
 
         $schedule->delete();
 
-        return response()->json(['message' => 'Horario eliminado']);
+        return $this->respuesta($request, 'Horario eliminado');
     }
 }

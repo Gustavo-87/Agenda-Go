@@ -154,7 +154,7 @@ class AppointmentController extends Controller
             $appointment->business_id
         );
 
-        return response()->json(['message' => 'Reserva confirmada']);
+        return $this->respuesta($request, 'Reserva confirmada');
     }
 
     public function cancel(Request $request, Appointment $appointment)
@@ -181,7 +181,7 @@ class AppointmentController extends Controller
             $appointment->business_id
         );
 
-        return response()->json(['message' => 'Reserva cancelada']);
+        return $this->respuesta($request, 'Reserva cancelada');
     }
 
     public function reschedule(Request $request, Appointment $appointment)
@@ -223,7 +223,7 @@ class AppointmentController extends Controller
                 : null,
         ]);
 
-        return response()->json(['message' => 'Reserva reprogramada']);
+        return $this->respuesta($request, 'Reserva reprogramada');
     }
 
     /**
@@ -241,7 +241,7 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => AppointmentStatus::Completed->value]);
 
-        return response()->json(['message' => 'Asistencia confirmada']);
+        return $this->respuesta($request, 'Asistencia confirmada');
     }
 
     /**
@@ -264,7 +264,7 @@ class AppointmentController extends Controller
             Customer::whereKey($appointment->customer_id)->increment('absences');
         }
 
-        return response()->json(['message' => 'Ausencia registrada']);
+        return $this->respuesta($request, 'Ausencia registrada');
     }
 
     /**

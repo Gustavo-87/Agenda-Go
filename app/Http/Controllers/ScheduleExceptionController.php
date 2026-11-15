@@ -34,10 +34,7 @@ class ScheduleExceptionController extends Controller
             'professional_id' => $professional->id,
         ]);
 
-        return response()->json([
-            'message' => 'Excepción registrada',
-            'exception_id' => $exception->id,
-        ], 201);
+        return $this->respuesta($request, 'Excepción registrada', ['exception_id' => $exception->id], 201);
     }
 
     public function destroy(Request $request, ScheduleException $exception)
@@ -46,6 +43,6 @@ class ScheduleExceptionController extends Controller
 
         $exception->delete();
 
-        return response()->json(['message' => 'Excepción eliminada']);
+        return $this->respuesta($request, 'Excepción eliminada');
     }
 }

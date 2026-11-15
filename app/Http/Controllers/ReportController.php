@@ -23,25 +23,65 @@ class ReportController extends Controller
 
         $rango = $this->rango($request);
 
+        return response()->json([
+            'desde' => $rango[0],
+            'hasta' => $rango[1],
+            ...$this->resumen($business, $rango[0], $rango[1]),
+        ]);
+    }
+
+    /**
+     * Pantalla de reportes operativos del negocio.
+     */
+    public function pantalla(Request $request)
+    {
+        $user = $request->user();
+
+        $business = $user->isSuperAdmin()
+            ? Business::find((int) $request->query('business_id', $user->business_id))
+            : $user->business;
+
+        abort_unless($business !== null && $user->can('manage', $business), 403);
+
+        $desde = (string) $request->query('from', now()->subDays(30)->toDateString());
+        $hasta = (string) $request->query('to', now()->toDateString());
+        $request->merge(['from' => $desde, 'to' => $hasta]);
+
+        return view('reports.index', [
+            'negocio' => $business,
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'resumen' => $this->resumen($business, $desde, $hasta),
+            'citas' => $this->citas($request, $business),
+            'pagos' => ServicePayment::where('business_id', $business->id)
+                ->orderByDesc('paid_on')->limit(20)->get(),
+        ]);
+    }
+
+    /**
+     * Indicadores operativos del periodo.
+     *
+     * @return array<string, mixed>
+     */
+    private function resumen(Business $business, string $desde, string $hasta): array
+    {
         $citas = $business->appointments()
-            ->whereBetween('starts_at', [$rango[0].' 00:00:00', $rango[1].' 23:59:59'])
+            ->whereBetween('starts_at', [$desde.' 00:00:00', $hasta.' 23:59:59'])
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        return response()->json([
-            'desde' => $request->query('from'),
-            'hasta' => $request->query('to'),
+        return [
             'citas_por_estado' => $citas,
             'ingresos_servicios' => ServicePayment::where('business_id', $business->id)
-                ->whereBetween('paid_on', [$request->query('from'), $request->query('to')])
+                ->whereBetween('paid_on', [$desde, $hasta])
                 ->where('verified', true)
                 ->sum('amount'),
             'ingresos_membresias' => MembershipPayment::where('business_id', $business->id)
-                ->whereBetween('paid_on', [$request->query('from'), $request->query('to')])
+                ->whereBetween('paid_on', [$desde, $hasta])
                 ->where('verified', true)
                 ->sum('amount'),
-        ]);
+        ];
     }
 
     public function appointmentsCsv(Request $request, Business $business)

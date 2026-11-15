@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Business;
 use App\Models\Professional;
+use App\Models\ScheduleException;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -42,10 +44,28 @@ class ProfessionalController extends Controller
             'business_id' => $business->id,
         ]);
 
-        return response()->json([
-            'message' => 'Profesional creado',
-            'professional_id' => $professional->id,
-        ], 201);
+        return $this->respuesta($request, 'Profesional creado', ['professional_id' => $professional->id], 201);
+    }
+
+    /**
+     * Pantalla de gestión del negocio: profesionales, servicios,
+     * horarios, excepciones y festivos.
+     */
+    public function pantalla(Request $request)
+    {
+        $business = $this->negocioGestionable($request);
+        $professionalIds = $business->professionals()->pluck('id');
+
+        return view('gestion.index', [
+            'negocio' => $business,
+            'profesionales' => $business->professionals()->orderBy('name')->get(),
+            'servicios' => $business->services()->orderBy('name')->get(),
+            'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)
+                ->get()->groupBy('professional_id'),
+            'excepciones' => ScheduleException::whereIn('professional_id', $professionalIds)
+                ->orderBy('starts_on')->get()->groupBy('professional_id'),
+            'festivos' => $business->holidays()->orderBy('date')->get(),
+        ]);
     }
 
     public function update(Request $request, Professional $professional)
@@ -59,7 +79,7 @@ class ProfessionalController extends Controller
 
         $professional->update($data);
 
-        return response()->json(['message' => 'Profesional actualizado']);
+        return $this->respuesta($request, 'Profesional actualizado');
     }
 
     public function toggle(Request $request, Professional $professional)
@@ -72,10 +92,9 @@ class ProfessionalController extends Controller
 
         $professional->update(['active' => ! $professional->active]);
 
-        return response()->json([
-            'message' => $professional->active ? 'Profesional activado' : 'Profesional desactivado',
-            'active' => $professional->active,
-        ]);
+        $mensaje = $professional->active ? 'Profesional activado' : 'Profesional desactivado';
+
+        return $this->respuesta($request, $mensaje, ['active' => $professional->active]);
     }
 
     /**

@@ -44,10 +44,7 @@ class PaymentController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return response()->json([
-            'message' => 'Pago registrado',
-            'payment_id' => $payment->id,
-        ], 201);
+        return $this->respuesta($request, 'Pago registrado', ['payment_id' => $payment->id], 201);
     }
 
     public function verify(Request $request, ServicePayment $payment)
@@ -57,7 +54,7 @@ class PaymentController extends Controller
         $payment->update(['verified' => true]);
         AuditLog::registrar($request->user(), 'pago.servicio.verificado', $payment);
 
-        return response()->json(['message' => 'Pago verificado']);
+        return $this->respuesta($request, 'Pago verificado');
     }
 
     public function receipt(Request $request, ServicePayment $payment)
