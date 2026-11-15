@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ProfessionalController;
@@ -87,6 +88,17 @@ Route::middleware('auth')->group(function () {
         ->name('appointments.cancel');
     Route::post('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
         ->name('appointments.reschedule');
+    Route::post('/appointments/{appointment}/attend', [AppointmentController::class, 'attend'])
+        ->name('appointments.attend');
+    Route::post('/appointments/{appointment}/absent', [AppointmentController::class, 'absent'])
+        ->name('appointments.absent');
+
+    Route::get('/businesses/{business}/customers', [CustomerController::class, 'index'])
+        ->name('customers.index');
+    Route::get('/customers/{customer}', [CustomerController::class, 'show'])
+        ->name('customers.show');
+    Route::post('/customers/{customer}/consent', [CustomerController::class, 'consent'])
+        ->name('customers.consent');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');

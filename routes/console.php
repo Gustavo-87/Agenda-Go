@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('appointments:expire')->everyFiveMinutes();
 
 Schedule::command('memberships:notify-expiring')->dailyAt('08:00');
+
+Schedule::command('appointments:remind')->hourly();

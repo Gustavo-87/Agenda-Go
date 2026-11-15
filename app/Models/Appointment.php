@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['starts_at', 'ends_at', 'status', 'pending_expires_at'])]
+#[Fillable(['starts_at', 'ends_at', 'status', 'pending_expires_at', 'customer_id', 'reminder_sent_at'])]
 class Appointment extends Model
 {
     /**

@@ -7,6 +7,7 @@ use App\Jobs\EnviarNotificacionWhatsApp;
 use App\Jobs\SyncAppointmentToGoogleCalendar;
 use App\Models\Appointment;
 use App\Models\Business;
+use App\Models\Customer;
 use App\Models\Professional;
 use App\Models\Service;
 use App\Models\User;
@@ -78,18 +79,23 @@ class AppointmentController extends Controller
         }
 
         try {
-            $id = DB::transaction(function () use ($data, $professional, $service, $start, $end) {
+            $customer = Customer::updateOrCreate(
+                ['business_id' => $business->id, 'phone' => $data['customer_phone']],
+                ['name' => $data['customer_name']]
+            );
+
+            $id = DB::transaction(function () use ($data, $professional, $service, $business, $customer, $start, $end) {
                 if ($this->disponibilidad->estaOcupado($professional, $start, $end)) {
                     throw ValidationException::withMessages(['starts_at' => 'Este horario ya está reservado']);
                 }
 
-                $business = $professional->business;
                 $confirmada = (bool) $business->booking_auto_confirm;
 
                 return DB::table('appointments')->insertGetId([
                     'professional_id' => $professional->id,
                     'service_id' => $service->id,
                     'business_id' => $business->id,
+                    'customer_id' => $customer->id,
                     'customer_name' => $data['customer_name'],
                     'customer_phone' => $data['customer_phone'],
                     'starts_at' => $start->format('Y-m-d H:i:s'),
@@ -112,6 +118,14 @@ class AppointmentController extends Controller
         }
 
         SyncAppointmentToGoogleCalendar::dispatch($id);
+
+        if ($customer->absences >= 2 && $professional->phone !== null) {
+            EnviarNotificacionWhatsApp::dispatch(
+                $professional->phone,
+                'Alerta: la cliente '.$customer->name.' tiene '.$customer->absences.' ausencias registradas.',
+                $business->id
+            );
+        }
 
         return response()->json([
             'message' => 'Reserva confirmada',
@@ -210,6 +224,47 @@ class AppointmentController extends Controller
         ]);
 
         return response()->json(['message' => 'Reserva reprogramada']);
+    }
+
+    /**
+     * Registro de asistencia: confirmada → completada.
+     */
+    public function attend(Request $request, Appointment $appointment)
+    {
+        $this->assertPuedeGestionarCita($request->user(), $appointment);
+
+        if ($appointment->status !== AppointmentStatus::Confirmed->value) {
+            throw ValidationException::withMessages([
+                'status' => 'Solo las citas confirmadas registran asistencia.',
+            ]);
+        }
+
+        $appointment->update(['status' => AppointmentStatus::Completed->value]);
+
+        return response()->json(['message' => 'Asistencia confirmada']);
+    }
+
+    /**
+     * Registro de ausencia: confirmada → ausente, con acumulado
+     * en la ficha del cliente (RN-027).
+     */
+    public function absent(Request $request, Appointment $appointment)
+    {
+        $this->assertPuedeGestionarCita($request->user(), $appointment);
+
+        if ($appointment->status !== AppointmentStatus::Confirmed->value) {
+            throw ValidationException::withMessages([
+                'status' => 'Solo las citas confirmadas registran ausencias.',
+            ]);
+        }
+
+        $appointment->update(['status' => AppointmentStatus::Absent->value]);
+
+        if ($appointment->customer_id !== null) {
+            Customer::whereKey($appointment->customer_id)->increment('absences');
+        }
+
+        return response()->json(['message' => 'Ausencia registrada']);
     }
 
     /**

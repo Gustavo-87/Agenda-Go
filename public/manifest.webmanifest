@@ -1,0 +1,9 @@
+{
+    "name": "AgendaGo",
+    "short_name": "AgendaGo",
+    "description": "Agenda de reservas para negocios de servicios",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0f766e"
+}
