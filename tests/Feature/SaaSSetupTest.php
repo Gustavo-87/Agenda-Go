@@ -122,4 +122,39 @@ class SaaSSetupTest extends TestCase
             ->assertSee('Registro de membresía')
             ->assertSee('Renovar');
     }
+
+    public function test_admin_forms_show_labels_guidance_and_required_indicators(): void
+    {
+        $business = Business::factory()->create();
+        Membership::create([
+            'business_id' => $business->id,
+            'starts_on' => now()->toDateString(),
+            'ends_on' => now()->addMonth()->toDateString(),
+            'amount' => 150000,
+        ]);
+        $super = $this->superAdmin();
+
+        $this->actingAs($super)
+            ->get('/admin/memberships')
+            ->assertOk()
+            ->assertSee('Fecha de inicio')
+            ->assertSee('Fecha de vencimiento')
+            ->assertSee('Valor mensual (COP)')
+            ->assertSee('Fecha de pago')
+            ->assertSee('son obligatorios');
+
+        $this->actingAs($super)
+            ->get('/admin/businesses/'.$business->id)
+            ->assertOk()
+            ->assertSee('Correo electrónico')
+            ->assertSee('Rol')
+            ->assertSee('Valor mensual (COP)')
+            ->assertSee('Primer día del período mensual');
+
+        $this->actingAs($super)
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('Nombre del negocio')
+            ->assertSee('Identificador (slug)');
+    }
 }
