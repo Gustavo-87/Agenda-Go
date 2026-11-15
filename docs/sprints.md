@@ -116,6 +116,12 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Edición completa de servicios desde la UI y paginación de clientes y reportes.
 - Corrección de accesos: usuarios sin negocio ven estados amigables (sin 403) en Clientes y Configuración, y el superadministrador puede seleccionar el negocio en contexto; se resuelve también el negocio vinculado mediante el profesional. Sin debilitar la autorización existente (aislamiento por negocio intacto).
 
+### Pulido de interfaz
+
+- Idioma español de Colombia (`es_CO`) para fechas, días, mensajes y validaciones (traducciones en `lang/es_CO/`, locale de Carbon en `AppServiceProvider`).
+- Búsqueda de clientes por nombre y teléfono, aislada por negocio y con paginación.
+- Tablas y agenda semanal adaptadas a móviles (columnas secundarias ocultas en pantallas pequeñas, sin desplazamiento horizontal innecesario).
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
