@@ -101,6 +101,12 @@
                                                     <x-text-input name="paid_on" type="date" title="Fecha de pago" class="w-36" required />
                                                     <x-secondary-button type="submit">Renovar</x-secondary-button>
                                                 </form>
+                                                @if ($membresia->status === 'active')
+                                                    <form method="POST" action="{{ route('admin.memberships.cancel', $membresia) }}" class="mt-1" onsubmit="return confirm('¿Cancelar la membresía? El servicio se conservará hasta el fin del período pagado.')">
+                                                        @csrf
+                                                        <x-danger-button type="submit">Cancelar</x-danger-button>
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach

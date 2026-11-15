@@ -153,6 +153,7 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         Route::post('/businesses/{business}/suspend', [AdminController::class, 'suspend'])->name('businesses.suspend');
         Route::post('/businesses/{business}/memberships', [AdminController::class, 'registerMembership'])->name('memberships.store');
         Route::post('/memberships/{membership}/renew', [AdminController::class, 'renew'])->name('memberships.renew');
+        Route::post('/memberships/{membership}/cancel', [AdminController::class, 'cancelMembership'])->name('memberships.cancel');
         Route::post('/membership-payments/{payment}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
     });
 });

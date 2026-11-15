@@ -116,7 +116,9 @@ class Business extends Model
             return true;
         }
 
-        return $membresia->status === 'active'
+        // La membresía cancelada conserva el servicio hasta el fin
+        // del período pagado (RF-MEM-006); la suspendida lo bloquea.
+        return in_array($membresia->status, ['active', 'cancelled'], true)
             && now()->toDateString() <= Carbon::parse($membresia->ends_on)->addDays(5)->toDateString();
     }
 }

@@ -284,6 +284,25 @@ class AdminController extends Controller
         return $this->respuesta($request, 'Usuario desvinculado del negocio');
     }
 
+    /**
+     * RF-MEM-006: cancelación sin permanencia mínima; el servicio se
+     * conserva hasta finalizar el período pagado (con gracia).
+     */
+    public function cancelMembership(Request $request, Membership $membership)
+    {
+        $this->assertSuperAdmin($request);
+
+        abort_unless($membership->status === 'active', 422);
+
+        $membership->update(['status' => 'cancelled']);
+        AuditLog::registrar($request->user(), 'membresia.cancelada', $membership);
+
+        return $this->respuesta(
+            $request,
+            'Membresía cancelada. El servicio se conserva hasta finalizar el período pagado.'
+        );
+    }
+
     private function assertSuperAdmin(Request $request): void
     {
         abort_unless($request->user()?->isSuperAdmin(), 403);

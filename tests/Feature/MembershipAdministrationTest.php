@@ -215,4 +215,34 @@ class MembershipAdministrationTest extends TestCase
 
         Queue::assertPushed(EnviarNotificacionWhatsApp::class, 1);
     }
+
+    public function test_cancellation_keeps_service_until_the_end_of_the_paid_period(): void
+    {
+        Queue::fake();
+        [$business, $professional, $service] = $this->negocioHabilitado();
+        $fecha = now('America/Bogota')->addDays(3)->toDateString();
+
+        $membership = Membership::create([
+            'business_id' => $business->id,
+            'starts_on' => now()->subDays(5)->toDateString(),
+            'ends_on' => now()->addDays(10)->toDateString(),
+            'amount' => 150000,
+        ]);
+
+        $this->actingAs($this->superAdmin())
+            ->postJson("/admin/memberships/{$membership->id}/cancel")
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('memberships', ['id' => $membership->id, 'status' => 'cancelled']);
+
+        // El servicio se conserva hasta finalizar el período pagado.
+        $this->reservar($professional, $service, "{$fecha} 09:00:00")
+            ->assertStatus(201);
+
+        // Finalizado el período con gracia, no hay nuevas reservas.
+        $this->travel(20)->days();
+
+        $this->reservar($professional, $service, now('America/Bogota')->addDays(3)->format('Y-m-d 09:00:00'))
+            ->assertStatus(422);
+    }
 }
