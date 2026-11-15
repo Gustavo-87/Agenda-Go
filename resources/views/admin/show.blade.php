@@ -182,6 +182,53 @@
                         </div>
                     @endif
 
+                    <h4 class="text-sm font-bold text-petrol mt-6 mb-2">Invitaciones pendientes</h4>
+                    @if ($invitaciones->isEmpty())
+                        <p class="text-sm text-gray-500">Sin invitaciones pendientes.</p>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-warm-100 text-sm">
+                                <thead>
+                                    <tr class="text-left text-gray-500 text-xs uppercase tracking-wide">
+                                        <th class="py-3 px-4">Correo</th>
+                                        <th class="py-3 px-4">Rol</th>
+                                        <th class="py-3 px-4">Vence</th>
+                                        <th class="py-3 px-4">Estado</th>
+                                        <th class="py-3 px-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-warm-100">
+                                    @foreach ($invitaciones as $invitacion)
+                                        @php $vencida = $invitacion->expires_at->isPast(); @endphp
+                                        <tr>
+                                            <td class="py-3 px-4 font-semibold text-petrol">{{ $invitacion->email }}</td>
+                                            <td class="py-3 px-4">{{ $invitacion->role === 'admin' ? 'Administrador' : 'Profesional' }}</td>
+                                            <td class="py-3 px-4">{{ $invitacion->expires_at->format('d/m/Y H:i') }}</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $vencida ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800' }}">
+                                                    {{ $vencida ? 'Vencida' : 'Pendiente' }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <div class="flex flex-wrap gap-2">
+                                                    <form method="POST" action="{{ route('invitations.resend', $invitacion) }}">
+                                                        @csrf
+                                                        <x-secondary-button type="submit">Reenviar</x-secondary-button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('invitations.revoke', $invitacion) }}" onsubmit="return confirm('¿Revocar esta invitación? El enlace dejará de funcionar.')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <x-danger-button type="submit">Revocar</x-danger-button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+
                     <h4 class="text-sm font-bold text-petrol mt-6 mb-2">Pagos de membresía</h4>
                     @if ($pagos->isEmpty())
                         <p class="text-sm text-gray-500">Sin pagos registrados.</p>

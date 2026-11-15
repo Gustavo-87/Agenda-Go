@@ -29,6 +29,14 @@ class Professional extends Model
     }
 
     /**
+     * @return HasMany<Service, $this>
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    /**
      * @return HasMany<WorkSchedule, $this>
      */
     public function workSchedules(): HasMany

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Business;
+use App\Models\Invitation;
 use App\Models\Membership;
 use App\Models\MembershipPayment;
 use App\Models\User;
@@ -178,6 +179,8 @@ class AdminController extends Controller
         return view('admin.show', [
             'negocio' => $business->load('memberships'),
             'usuarios' => $business->users()->orderBy('name')->get(),
+            'invitaciones' => Invitation::where('business_id', $business->id)
+                ->whereNull('accepted_at')->orderByDesc('id')->get(),
             'pagos' => MembershipPayment::where('business_id', $business->id)
                 ->orderByDesc('id')->get(),
         ]);

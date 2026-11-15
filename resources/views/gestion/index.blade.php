@@ -46,7 +46,7 @@
                             <div class="text-xs text-gray-500 self-center">Máximo 5 profesionales activos por negocio.</div>
                         </form>
 
-                        <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 border-t border-warm-100 pt-4">
+                        <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 border-t border-warm-100 pt-4">
                             @csrf
                             <input type="hidden" name="role" value="professional">
                             <x-text-input name="email" type="email" placeholder="Invitar profesional por correo…" class="w-full" required />
@@ -54,6 +54,26 @@
                             <div></div>
                             <x-primary-button class="justify-center">Enviar invitación</x-primary-button>
                         </form>
+
+                        @if (($invitaciones ?? collect())->isNotEmpty())
+                            <div class="flex flex-wrap items-center gap-2 mb-6">
+                                <span class="text-xs text-gray-500">Pendientes:</span>
+                                @foreach ($invitaciones as $invitacion)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-amber-50 border border-amber-200 text-amber-800">
+                                        {{ $invitacion->email }}
+                                        <form method="POST" action="{{ route('invitations.resend', $invitacion) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="underline hover:opacity-70" title="Reenviar">↻</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('invitations.revoke', $invitacion) }}" class="inline" onsubmit="return confirm('¿Revocar esta invitación?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="underline hover:opacity-70" title="Revocar">✕</button>
+                                        </form>
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
 
                         @if ($profesionales->isEmpty())
                             <x-empty-state icon="users" title="Sin profesionales" message="Agrega la primera profesional para comenzar a recibir reservas." />

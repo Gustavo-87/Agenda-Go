@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
@@ -36,6 +37,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/2fa', [TwoFactorController::class, 'show'])->name('2fa.show');
     Route::post('/2fa', [TwoFactorController::class, 'verify'])->name('2fa.verify');
+    Route::get('/invitations/accept', [InvitationController::class, 'acceptForm'])->name('invitations.accept');
+    Route::post('/invitations/accept', [InvitationController::class, 'accept'])->name('invitations.accept.store');
 });
 
 require __DIR__.'/auth.php';
@@ -138,6 +141,10 @@ Route::middleware(['auth', 'twofa'])->group(function () {
     Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::delete('/admin/users/{user}/assignment', [AdminController::class, 'detachUser'])->name('admin.users.detach');
     Route::patch('/professionals/{professional}/user', [ProfessionalController::class, 'assignUser'])->name('professionals.assign-user');
+    Route::patch('/professionals/{professional}/contact', [ProfessionalController::class, 'updateContact'])->name('professionals.contact');
+    Route::post('/businesses/{business}/invitations', [InvitationController::class, 'store'])->name('invitations.store');
+    Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])->name('invitations.resend');
+    Route::delete('/invitations/{invitation}', [InvitationController::class, 'revoke'])->name('invitations.revoke');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');

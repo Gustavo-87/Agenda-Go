@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Models\Invitation;
 use App\Models\Professional;
 use App\Models\ScheduleException;
 use App\Models\User;
@@ -68,6 +69,8 @@ class ProfessionalController extends Controller
             'negocio' => $business,
             'profesionales' => $business?->professionals()->orderBy('name')->get() ?? collect(),
             'usuarios' => $business?->users()->orderBy('name')->get() ?? collect(),
+            'invitaciones' => $business === null ? collect() : Invitation::where('business_id', $business->id)
+                ->where('role', 'professional')->whereNull('accepted_at')->orderByDesc('id')->get(),
             'servicios' => $business?->services()->orderBy('name')->get() ?? collect(),
             'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)
                 ->get()->groupBy('professional_id'),
