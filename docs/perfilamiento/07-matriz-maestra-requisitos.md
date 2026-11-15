@@ -43,7 +43,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-MEM-004 | 5 días de gracia tras el vencimiento y luego suspensión de nuevas reservas, conservando datos. | 02 §2, 04 RN-005/006/007 | Implementado | `Business::puedeReservar()`; `MembershipAdministrationTest` | — |
 | RF-MEM-005 | Aviso por WhatsApp 5 días antes del vencimiento, salvo renovación confirmada. | 02 §2, 04 RN-010 | Implementado | `NotifyExpiringMemberships` (con salto de renovadas); prueba del comando | Envío real pendiente de verificación Meta |
 | RF-MEM-006 | Cancelación sin permanencia mínima; el servicio se conserva hasta finalizar el período pagado. | 02 §2, 04 | Implementado | `AdminController::cancelMembership`; `Business::puedeReservar` (cancelada conserva servicio); `MembershipAdministrationTest` | — |
-| Dec-15 | Retención de datos 90 días tras la cancelación, salvo obligación legal; exportación bajo solicitud al superadministrador. | 01 | Parcial | `retention:report` (inventario de retención vencida, sin borrado automático); `PendingRequirementsTest` | Falta exportación bajo solicitud y proceso validado de purga |
+| Dec-15 | Retención de datos 90 días tras la cancelación, salvo obligación legal; exportación bajo solicitud al superadministrador. | 01 | Implementado | Exportación JSON audited y segura (`AdminController::exportBusiness`), revisión de retención y purga con autorización explícita (`retention:purge`) con exclusión legal (`legal_hold`); `DataGovernanceTest` | Validar una purga real con autorización del negocio |
 
 ### B3. Mensajería incluida
 
@@ -72,7 +72,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-CLI-001 | Historial de clientes separado por negocio (citas, servicios, cancelaciones, ausencias). | 02 §6 | Implementado | `customers` + `CustomerController`; `CustomerCommunicationsTest` | — |
 | RF-CLI-002 | Aviso y autorización de tratamiento de datos verificable. | 02 §6 | Implementado | `data_consent`/`data_consent_at`; `CustomerCommunicationsTest` | — |
 | Dec-12 | Consentimiento comercial independiente del tratamiento de datos. | 01 | Implementado | `customers.commercial_consent` (+evidencia/revocación y auditoría); `PendingRequirementsTest` | — |
-| Dec-10 | Recordatorio 24 horas antes con confirmación de asistencia o cancelación; avisos a profesionales por WhatsApp y plataforma. | 01, 02 §7 | Parcial | `appointments:remind`; respuestas de WhatsApp confirman/cancelan (`ReservaWhatsAppService`); avisos de ausencia; `PendingRequirementsTest` | Falta aviso "en plataforma" (bandeja) |
+| Dec-10 | Recordatorio 24 horas antes con confirmación de asistencia o cancelación; avisos a profesionales por WhatsApp y plataforma. | 01, 02 §7 | Implementado | `appointments:remind`; respuestas de WhatsApp confirman/cancelan; centro de notificaciones interno (`app_notifications`); `PendingRequirementsTest`, `DataGovernanceTest` | — |
 | RF-COM-* | Registro y trazabilidad de comunicaciones. | 01, 02 §7 | Implementado | `whatsapp_messages` | — |
 
 ### B6. Pagos de servicios
@@ -128,8 +128,9 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 - **D2 (nomenclatura):** la entrevista usa RF-MEM-01..03 y RF-MEN-01; el documento aprobado usa RF-MEM-001..006. Se conservan ambos con la tabla de alias (sección A); no se duplican requisitos.
 - **D3 (resuelta):** cada profesional gestiona su disponibilidad y bloqueos desde Configuración ("Mi disponibilidad"), con los mismos permisos y aislamiento del negocio.
 - **D4 (resuelta):** flujo explícito de cancelación de membresía sin permanencia; el servicio se conserva hasta el fin del período pagado.
-- **D5 (resuelta):** consentimiento comercial con evidencia y revocación, reporte de retención de 90 días (sin borrado automático), panel de consumo de mensajería con autorización expresa de excedentes, importación de festivos con bloqueo por defecto y excepciones por profesional, y confirmación/cancelación de citas por respuestas de WhatsApp. Pendientes restantes: exportación bajo solicitud, aviso "en plataforma" y proceso validado de purga.
+- **D5 (resuelta):** consentimiento comercial con evidencia y revocación, reporte de retención de 90 días (sin borrado automático), panel de consumo de mensajería con autorización expresa de excedentes, importación de festivos con bloqueo por defecto y excepciones por profesional, y confirmación/cancelación de citas por respuestas de WhatsApp. Pendientes restantes: proceso validado de purga real (requiere autorización explícita).
 - **D6 (defectos detectados y corregidos):** delimitador de regex inválido en `holidays:import` y relación de negocio cacheada en pantallas (datos frescos por solicitud).
+- **D7 (completada):** exportación de datos bajo solicitud con auditoría y archivo seguro; centro de notificaciones interno (citas, cambios, errores e invitaciones) para administradores y profesionales.
 
 ## E. Referencias cruzadas
 
