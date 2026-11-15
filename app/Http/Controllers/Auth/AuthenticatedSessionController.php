@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\MailDelivery;
 use App\Notifications\TwoFactorCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,15 @@ class AuthenticatedSessionController extends Controller
                 // El desafío continúa aunque el transporte de correo
                 // falle; el código puede recuperarse en desarrollo.
                 report($e);
+            }
+
+            $delivery = MailDelivery::where('recipient', $user->email)->latest('id')->first();
+
+            if ($delivery?->status === 'failed') {
+                $request->session()->flash(
+                    'advertencia',
+                    'El código fue generado, pero el envío al proveedor de correo falló. En desarrollo local usa: php artisan two-factor:code '.$user->email
+                );
             }
 
             return redirect()->route('2fa.show');

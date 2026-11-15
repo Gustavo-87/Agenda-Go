@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\AppNotification;
 use App\Models\Business;
 use App\Models\Invitation;
+use App\Models\MailDelivery;
 use App\Models\User;
 use App\Notifications\InvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Throwable;
 
 class InvitationController extends Controller
 {
@@ -48,8 +50,12 @@ class InvitationController extends Controller
             'expires_at' => now()->addHours(48),
         ]);
 
-        Notification::route('mail', $data['email'])
-            ->notify(new InvitationNotification($invitation, $token));
+        try {
+            Notification::route('mail', $data['email'])
+                ->notify(new InvitationNotification($invitation, $token));
+        } catch (Throwable $e) {
+            report($e);
+        }
 
         AppNotification::registrar(
             $business,
@@ -58,7 +64,18 @@ class InvitationController extends Controller
             'Invitación enviada a '.$data['email'].' como '.($data['role'] === 'admin' ? 'administrador' : 'profesional').'.'
         );
 
-        return $this->respuesta($request, 'Invitación enviada', ['invitation_id' => $invitation->id], 201);
+        $delivery = MailDelivery::where('recipient', $data['email'])->latest('id')->first();
+
+        if ($delivery?->status === 'failed') {
+            return $this->respuesta(
+                $request,
+                'Invitación registrada, pero el envío al proveedor de correo falló; usa Reenviar cuando el transporte esté disponible.',
+                ['invitation_id' => $invitation->id],
+                202
+            );
+        }
+
+        return $this->respuesta($request, 'Invitación enviada al proveedor de correo', ['invitation_id' => $invitation->id], 201);
     }
 
     public function acceptForm(Request $request)
@@ -114,10 +131,25 @@ class InvitationController extends Controller
             'expires_at' => now()->addHours(48),
         ]);
 
-        Notification::route('mail', $nueva->email)
-            ->notify(new InvitationNotification($nueva, $token));
+        try {
+            Notification::route('mail', $nueva->email)
+                ->notify(new InvitationNotification($nueva, $token));
+        } catch (Throwable $e) {
+            report($e);
+        }
 
-        return $this->respuesta($request, 'Invitación reenviada', ['invitation_id' => $nueva->id]);
+        $delivery = MailDelivery::where('recipient', $nueva->email)->latest('id')->first();
+
+        if ($delivery?->status === 'failed') {
+            return $this->respuesta(
+                $request,
+                'Invitación registrada, pero el envío al proveedor de correo falló; intenta Reenviar más tarde.',
+                ['invitation_id' => $nueva->id],
+                202
+            );
+        }
+
+        return $this->respuesta($request, 'Invitación reenviada al proveedor de correo', ['invitation_id' => $nueva->id]);
     }
 
     /**
