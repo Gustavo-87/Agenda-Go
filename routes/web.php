@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
@@ -112,6 +113,8 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         ->name('customers.show');
     Route::post('/customers/{customer}/consent', [CustomerController::class, 'consent'])
         ->name('customers.consent');
+    Route::post('/customers/{customer}/commercial-consent', [CustomerController::class, 'commercialConsent'])
+        ->name('customers.commercial-consent');
 
     Route::post('/businesses/{business}/payments', [PaymentController::class, 'store'])
         ->name('payments.store');
@@ -128,6 +131,10 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         ->name('reports.appointments.xlsx');
     Route::get('/businesses/{business}/reports/appointments.pdf', [ReportController::class, 'appointmentsPdf'])
         ->name('reports.appointments.pdf');
+
+    Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notificaciones/{appNotification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notificaciones/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 
     Route::get('/gestion', [ProfessionalController::class, 'pantalla'])->name('gestion.index');
     Route::get('/clientes', [CustomerController::class, 'pantalla'])->name('clientes.index');
@@ -154,6 +161,11 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         Route::post('/businesses/{business}/memberships', [AdminController::class, 'registerMembership'])->name('memberships.store');
         Route::post('/memberships/{membership}/renew', [AdminController::class, 'renew'])->name('memberships.renew');
         Route::post('/memberships/{membership}/cancel', [AdminController::class, 'cancelMembership'])->name('memberships.cancel');
+        Route::patch('/businesses/{business}/messaging', [AdminController::class, 'updateMessaging'])->name('businesses.messaging');
+        Route::post('/businesses/{business}/export', [AdminController::class, 'exportBusiness'])->name('businesses.export');
+        Route::get('/exports/{archivo}', [AdminController::class, 'downloadExport'])->name('exports.download');
+        Route::get('/retention', [AdminController::class, 'retentionReview'])->name('retention.review');
+        Route::post('/businesses/{business}/legal-hold', [AdminController::class, 'legalHold'])->name('businesses.legal-hold');
         Route::post('/membership-payments/{payment}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
     });
 });

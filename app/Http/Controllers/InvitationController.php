@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppNotification;
 use App\Models\Business;
 use App\Models\Invitation;
 use App\Models\User;
@@ -49,6 +50,13 @@ class InvitationController extends Controller
 
         Notification::route('mail', $data['email'])
             ->notify(new InvitationNotification($invitation, $token));
+
+        AppNotification::registrar(
+            $business,
+            null,
+            'invitacion',
+            'Invitación enviada a '.$data['email'].' como '.($data['role'] === 'admin' ? 'administrador' : 'profesional').'.'
+        );
 
         return $this->respuesta($request, 'Invitación enviada', ['invitation_id' => $invitation->id], 201);
     }

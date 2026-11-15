@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\AppNotification;
 use App\Models\Business;
 use App\Models\WhatsAppMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -62,6 +63,13 @@ class EnviarNotificacionWhatsApp implements ShouldQueue
         ]);
 
         if ($respuesta->failed()) {
+            AppNotification::registrar(
+                $business,
+                null,
+                'error',
+                'No se pudo enviar el mensaje de WhatsApp a '.$this->telefono.'.'
+            );
+
             throw new RuntimeException('No se pudo enviar el mensaje de WhatsApp.');
         }
     }

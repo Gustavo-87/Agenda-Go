@@ -55,6 +55,10 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        <x-dropdown-link :href="route('notifications.index')">
+                            {{ __('Notificaciones') }}
+                        </x-dropdown-link>
+
                         <x-dropdown-link :href="route('configuracion.index')">
                             {{ __('Configuración') }}
                         </x-dropdown-link>

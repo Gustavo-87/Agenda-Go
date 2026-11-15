@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AppointmentStatus;
 use App\Jobs\EnviarNotificacionWhatsApp;
 use App\Jobs\SyncAppointmentToGoogleCalendar;
+use App\Models\AppNotification;
 use App\Models\Appointment;
 use App\Models\Business;
 use App\Models\Customer;
@@ -159,6 +160,8 @@ class AppointmentController extends Controller
             $appointment->business_id
         );
 
+        $this->notificarCita($appointment, 'Cita confirmada: '.$appointment->customer_name.', '.$appointment->starts_at.'.');
+
         return $this->respuesta($request, 'Reserva confirmada');
     }
 
@@ -185,6 +188,8 @@ class AppointmentController extends Controller
             'Tu cita fue cancelada. Si deseas reprogramarla, escríbenos.',
             $appointment->business_id
         );
+
+        $this->notificarCita($appointment, 'Cita cancelada: '.$appointment->customer_name.', '.$appointment->starts_at.'.');
 
         return $this->respuesta($request, 'Reserva cancelada');
     }
@@ -229,6 +234,8 @@ class AppointmentController extends Controller
             'pending_expires_at' => $pendiente ? $vencimiento->format('Y-m-d H:i:s') : null,
         ]);
 
+        $this->notificarCita($appointment, 'Cita reprogramada: '.$appointment->customer_name.', ahora '.$appointment->starts_at.'.');
+
         return $this->respuesta($request, 'Reserva reprogramada');
     }
 
@@ -246,6 +253,8 @@ class AppointmentController extends Controller
         }
 
         $appointment->update(['status' => AppointmentStatus::Completed->value]);
+
+        $this->notificarCita($appointment, 'Asistencia registrada: '.$appointment->customer_name.'.');
 
         return $this->respuesta($request, 'Asistencia confirmada');
     }
@@ -270,7 +279,17 @@ class AppointmentController extends Controller
             Customer::whereKey($appointment->customer_id)->increment('absences');
         }
 
+        $this->notificarCita($appointment, 'Ausencia registrada: '.$appointment->customer_name.'.');
+
         return $this->respuesta($request, 'Ausencia registrada');
+    }
+
+    /**
+     * Aviso interno en el centro de notificaciones del negocio.
+     */
+    private function notificarCita(Appointment $appointment, string $mensaje): void
+    {
+        AppNotification::registrar($appointment->business, null, 'cita', $mensaje);
     }
 
     /**
