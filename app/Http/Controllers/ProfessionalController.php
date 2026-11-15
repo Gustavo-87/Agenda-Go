@@ -99,11 +99,7 @@ class ProfessionalController extends Controller
 
     private function assertPuedeGestionar(User $user, Professional $professional): void
     {
-        $autorizado = $professional->business !== null
-            ? $user->can('manage', $professional->business)
-            : $user->isSuperAdmin();
-
-        abort_unless($autorizado, 403);
+        abort_unless($user->can('manage', $professional), 403);
     }
 
     /**

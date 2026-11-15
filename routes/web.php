@@ -4,6 +4,7 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,4 +41,13 @@ Route::middleware('auth')->group(function () {
         ->name('professionals.update');
     Route::patch('/professionals/{professional}/toggle', [ProfessionalController::class, 'toggle'])
         ->name('professionals.toggle');
+
+    Route::get('/businesses/{business}/services', [ServiceController::class, 'index'])
+        ->name('services.index');
+    Route::post('/businesses/{business}/services', [ServiceController::class, 'store'])
+        ->name('services.store');
+    Route::patch('/services/{service}', [ServiceController::class, 'update'])
+        ->name('services.update');
+    Route::patch('/services/{service}/toggle', [ServiceController::class, 'toggle'])
+        ->name('services.toggle');
 });
