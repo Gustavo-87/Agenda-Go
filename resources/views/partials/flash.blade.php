@@ -1,3 +1,12 @@
+@if (session('advertencia'))
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-4">
+        <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl text-sm font-medium shadow-sm">
+            <x-icon name="bell" class="w-5 h-5 text-amber-600" />
+            {{ session('advertencia') }}
+        </div>
+    </div>
+@endif
+
 @if (session('success'))
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-4">
         <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl text-sm font-medium shadow-sm">

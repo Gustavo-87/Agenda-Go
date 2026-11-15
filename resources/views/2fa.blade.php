@@ -1,5 +1,10 @@
 <x-guest-layout>
     <div class="text-center">
+        @if (session('advertencia'))
+            <div class="mb-4 text-left bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl text-sm">
+                {{ session('advertencia') }}
+            </div>
+        @endif
         <div class="w-14 h-14 rounded-2xl bg-turquoise-100 text-turquoise-700 flex items-center justify-center mx-auto">
             <x-icon name="shield" class="w-7 h-7" />
         </div>
