@@ -258,13 +258,16 @@ class AdminController extends Controller
 
         $data = $request->validate([
             'role' => ['required', 'in:admin,professional'],
-            'business_id' => ['nullable', 'integer', 'exists:businesses,id'],
+            'business_id' => ['sometimes', 'nullable', 'integer', 'exists:businesses,id'],
         ]);
 
-        $user->update([
-            'role' => $data['role'],
-            'business_id' => $data['business_id'] ?? null,
-        ]);
+        $campos = ['role' => $data['role']];
+
+        if (array_key_exists('business_id', $data)) {
+            $campos['business_id'] = $data['business_id'];
+        }
+
+        $user->update($campos);
 
         AuditLog::registrar($request->user(), 'usuario.editado', $user);
 
