@@ -3,6 +3,9 @@
 Registro de decisiones, avances y pendientes para retomar el desarrollo en otra sesión.
 Última actualización: 2026-11-15.
 
+Requisitos vinculantes consolidados en `docs/perfilamiento/07-matriz-maestra-requisitos.md`
+(con alias de los IDs originales RF-MEM-01..03 y RF-MEN-01).
+
 ## Estado de sprints
 
 | Sprint | Nombre | Estado |

@@ -241,6 +241,7 @@ tempranamente para evitar descubrir bloqueos al final.
 ## Referencias
 
 - 01-decisiones-aprobadas.md
+- 07-matriz-maestra-requisitos.md (referencia maestra vinculante de requisitos y trazabilidad)
 - 02-requisitos-funcionales.md
 - 03-requisitos-no-funcionales.md
 - 04-reglas-negocio.md
