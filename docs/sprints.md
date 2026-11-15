@@ -139,6 +139,8 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Invitaciones seguras por correo para administradores y profesionales: token aleatorio almacenado con hash SHA-256, vigencia de 48 horas, un solo uso y establecimiento de contraseña por el invitado.
 - El superadministrador invita administradores y profesionales; la administración de un negocio solo invita profesionales de su propio negocio.
 - Edición de datos de contacto del profesional desde Configuración (por la propia profesional o su administración).
+- Revocación y reenvío seguro de invitaciones desde la interfaz (detalle del negocio y Gestión): el reenvío invalida el enlace anterior y emite uno nuevo; la revocación conserva el registro histórico.
+- E2E verificado: alta de negocio → activación → invitación del administrador → establecimiento de contraseña → acceso con 2FA → gestión de profesionales, servicios, horarios y reservas, con aislamiento entre negocios.
 
 ## Pendientes para continuar
 
