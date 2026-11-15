@@ -270,4 +270,54 @@ class WebInterfaceTest extends TestCase
             ->assertOk()
             ->assertSee('Cliente Global');
     }
+
+    public function test_customers_can_be_searched_by_name_and_phone(): void
+    {
+        $business = Business::factory()->create();
+        $otherBusiness = Business::factory()->create();
+
+        Customer::create(['business_id' => $business->id, 'name' => 'Carla', 'phone' => '3001111111']);
+        Customer::create(['business_id' => $business->id, 'name' => 'Carolina', 'phone' => '3002222222']);
+        Customer::create(['business_id' => $otherBusiness->id, 'name' => 'Carla Externa', 'phone' => '3001111111']);
+
+        $admin = $this->adminOf($business);
+
+        $this->actingAs($admin)
+            ->get('/clientes?q=Carla')
+            ->assertOk()
+            ->assertSee('Carla')
+            ->assertDontSee('Carolina')
+            ->assertDontSee('Externa');
+
+        $this->actingAs($admin)
+            ->get('/clientes?q=300222')
+            ->assertOk()
+            ->assertSee('Carolina')
+            ->assertDontSee('>Carla<')
+            ->assertDontSee('3001111111');
+    }
+
+    public function test_validation_messages_are_displayed_in_spanish(): void
+    {
+        $business = Business::factory()->create();
+        $admin = $this->adminOf($business);
+
+        $this->actingAs($admin)
+            ->from('/gestion')
+            ->post('/professionals', ['name' => str_repeat('a', 200)])
+            ->assertRedirect('/gestion')
+            ->assertSessionHasErrors('name');
+
+        $this->assertStringContainsString('caracteres', session('errors')->first('name'));
+    }
+
+    public function test_the_agenda_shows_colombian_spanish_dates(): void
+    {
+        $business = Business::factory()->create();
+
+        $this->actingAs($this->adminOf($business))
+            ->get('/agenda?date=2026-11-16')
+            ->assertOk()
+            ->assertSee('lunes, 16 de noviembre');
+    }
 }
