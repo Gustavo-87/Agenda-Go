@@ -62,6 +62,14 @@ class AppointmentController extends Controller
             abort(422, 'Profesional o servicio no disponible');
         }
 
+        $business = $professional->business;
+
+        if ($business === null || ! $business->puedeReservar()) {
+            throw ValidationException::withMessages([
+                'professional_id' => 'El negocio no está habilitado para nuevas reservas.',
+            ]);
+        }
+
         $start = Carbon::createFromFormat('Y-m-d H:i:s', $data['starts_at']);
         $end = $start->copy()->addMinutes((int) $service->duration_minutes);
 

@@ -1,0 +1,155 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Business;
+use App\Models\Membership;
+use App\Models\MembershipPayment;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+/**
+ * Panel del superadministrador: altas, activación, membresías,
+ * pagos y renovaciones (Sprint 5).
+ */
+class AdminController extends Controller
+{
+    public function businesses(Request $request)
+    {
+        $this->assertSuperAdmin($request);
+
+        return response()->json([
+            'data' => Business::with('memberships')->orderBy('id')->get(),
+        ]);
+    }
+
+    public function storeBusiness(Request $request)
+    {
+        $this->assertSuperAdmin($request);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'slug' => ['required', 'string', 'max:120', 'unique:businesses,slug'],
+            'sector' => ['nullable', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $business = Business::create($data);
+
+        return response()->json([
+            'message' => 'Negocio registrado',
+            'business_id' => $business->id,
+        ], 201);
+    }
+
+    public function activate(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $business->update(['active' => true]);
+
+        return response()->json(['message' => 'Negocio activado']);
+    }
+
+    public function suspend(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $business->update(['active' => false]);
+        $business->memberships()->update(['status' => 'suspended']);
+
+        return response()->json(['message' => 'Negocio suspendido']);
+    }
+
+    public function registerMembership(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $data = $request->validate([
+            'starts_on' => ['required', 'date_format:Y-m-d'],
+            'ends_on' => ['required', 'date_format:Y-m-d', 'after:starts_on'],
+            'amount' => ['required', 'integer', 'min:0'],
+            'paid_on' => ['required', 'date_format:Y-m-d'],
+            'method' => ['nullable', 'string', 'max:60'],
+            'reference' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $membership = Membership::create([
+            'business_id' => $business->id,
+            'starts_on' => $data['starts_on'],
+            'ends_on' => $data['ends_on'],
+            'amount' => $data['amount'],
+            'status' => 'active',
+        ]);
+
+        $payment = MembershipPayment::create([
+            'business_id' => $business->id,
+            'membership_id' => $membership->id,
+            'amount' => $data['amount'],
+            'paid_on' => $data['paid_on'],
+            'method' => $data['method'] ?? null,
+            'reference' => $data['reference'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Membresía registrada',
+            'membership_id' => $membership->id,
+            'payment_id' => $payment->id,
+        ], 201);
+    }
+
+    public function renew(Request $request, Membership $membership)
+    {
+        $this->assertSuperAdmin($request);
+
+        $data = $request->validate([
+            'amount' => ['required', 'integer', 'min:0'],
+            'paid_on' => ['required', 'date_format:Y-m-d'],
+            'method' => ['nullable', 'string', 'max:60'],
+            'reference' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $inicio = Carbon::parse($membership->ends_on)->addDay()->toDateString();
+        $fin = Carbon::parse($inicio)->addMonth()->subDay()->toDateString();
+
+        $nueva = Membership::create([
+            'business_id' => $membership->business_id,
+            'starts_on' => $inicio,
+            'ends_on' => $fin,
+            'amount' => $data['amount'],
+            'status' => 'active',
+        ]);
+
+        $payment = MembershipPayment::create([
+            'business_id' => $membership->business_id,
+            'membership_id' => $nueva->id,
+            'amount' => $data['amount'],
+            'paid_on' => $data['paid_on'],
+            'method' => $data['method'] ?? null,
+            'reference' => $data['reference'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Membresía renovada',
+            'membership_id' => $nueva->id,
+            'payment_id' => $payment->id,
+        ], 201);
+    }
+
+    public function verifyPayment(Request $request, MembershipPayment $payment)
+    {
+        $this->assertSuperAdmin($request);
+
+        $payment->update(['verified' => true]);
+        $payment->membership->update(['status' => 'active']);
+        $payment->business->update(['active' => true]);
+
+        return response()->json(['message' => 'Pago verificado y servicio habilitado']);
+    }
+
+    private function assertSuperAdmin(Request $request): void
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+    }
+}

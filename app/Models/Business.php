@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -71,5 +72,35 @@ class Business extends Model
     public function holidays(): HasMany
     {
         return $this->hasMany(Holiday::class);
+    }
+
+    /**
+     * @return HasMany<Membership, $this>
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    /**
+     * RN-003 / RN-005 / RN-006: el negocio acepta reservas si está
+     * activo y su membresía vigente no está suspendida, con cinco
+     * días de gracia tras el vencimiento. Un negocio sin membresías
+     * registradas conserva su comportamiento histórico.
+     */
+    public function puedeReservar(): bool
+    {
+        if (! $this->active) {
+            return false;
+        }
+
+        $membresia = $this->memberships()->orderByDesc('ends_on')->first();
+
+        if ($membresia === null) {
+            return true;
+        }
+
+        return $membresia->status === 'active'
+            && now()->toDateString() <= Carbon::parse($membresia->ends_on)->addDays(5)->toDateString();
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BusinessController;
@@ -86,4 +87,14 @@ Route::middleware('auth')->group(function () {
         ->name('appointments.cancel');
     Route::post('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
         ->name('appointments.reschedule');
+
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');
+        Route::post('/businesses', [AdminController::class, 'storeBusiness'])->name('businesses.store');
+        Route::post('/businesses/{business}/activate', [AdminController::class, 'activate'])->name('businesses.activate');
+        Route::post('/businesses/{business}/suspend', [AdminController::class, 'suspend'])->name('businesses.suspend');
+        Route::post('/businesses/{business}/memberships', [AdminController::class, 'registerMembership'])->name('memberships.store');
+        Route::post('/memberships/{membership}/renew', [AdminController::class, 'renew'])->name('memberships.renew');
+        Route::post('/membership-payments/{payment}/verify', [AdminController::class, 'verifyPayment'])->name('payments.verify');
+    });
 });
