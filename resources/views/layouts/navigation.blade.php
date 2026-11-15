@@ -1,17 +1,15 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
+<nav x-data="{ open: false }" class="bg-petrol shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <div class="flex">
+            <div class="flex items-center gap-8">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
-                </div>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 shrink-0">
+                    <x-application-logo class="h-9 w-9" />
+                    <span class="text-white font-extrabold text-lg tracking-tight">agenda<span class="text-turquoise-500">Go</span></span>
+                </a>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden sm:flex sm:items-center sm:gap-1 sm:h-full">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Panel') }}
                     </x-nav-link>
@@ -39,18 +37,16 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- User Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 9.293a1 1 0 011.414 0L10 12.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                        <button class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition">
+                            <span class="w-8 h-8 rounded-full bg-turquoise-600 text-white flex items-center justify-center text-xs font-bold">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            </span>
+                            <span class="hidden md:inline">{{ Auth::user()->name }}</span>
+                            <x-icon name="arrow-right" class="w-4 h-4 rotate-90 opacity-70" />
                         </button>
                     </x-slot>
 
@@ -63,7 +59,6 @@
                             {{ __('Perfil') }}
                         </x-dropdown-link>
 
-                        <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 
@@ -79,7 +74,7 @@
 
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -90,50 +85,46 @@
     </div>
 
     <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-petrol-900 border-t border-white/10">
+        <div class="pt-3 pb-4 px-3 space-y-1">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="chart">
                 {{ __('Panel') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')">
+            <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')" icon="calendar">
                 {{ __('Agenda') }}
             </x-responsive-nav-link>
             @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')">
+                <x-responsive-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')" icon="briefcase">
                     {{ __('Gestión') }}
                 </x-responsive-nav-link>
             @endif
-            <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')">
+            <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')" icon="users">
                 {{ __('Clientes') }}
             </x-responsive-nav-link>
             @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')">
+                <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')" icon="money">
                     {{ __('Reportes') }}
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isSuperAdmin())
-                <x-responsive-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')">
+                <x-responsive-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')" icon="shield">
                     {{ __('Administración') }}
                 </x-responsive-nav-link>
             @endif
-            <x-responsive-nav-link :href="route('configuracion.index')" :active="request()->routeIs('configuracion.index')">
+            <x-responsive-nav-link :href="route('configuracion.index')" :active="request()->routeIs('configuracion.index')" icon="cog">
                 {{ __('Configuración') }}
             </x-responsive-nav-link>
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
+        <div class="pt-3 pb-4 px-4 border-t border-white/10">
+            <div class="text-white font-semibold">{{ Auth::user()->name }}</div>
+            <div class="text-white/50 text-sm">{{ Auth::user()->email }}</div>
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
                     {{ __('Perfil') }}
                 </x-responsive-nav-link>
 
-                <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
