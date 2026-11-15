@@ -7,8 +7,10 @@ use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleExceptionController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\WorkScheduleController;
@@ -99,6 +101,18 @@ Route::middleware('auth')->group(function () {
         ->name('customers.show');
     Route::post('/customers/{customer}/consent', [CustomerController::class, 'consent'])
         ->name('customers.consent');
+
+    Route::post('/businesses/{business}/payments', [PaymentController::class, 'store'])
+        ->name('payments.store');
+    Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])
+        ->name('payments.verify');
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt'])
+        ->name('payments.receipt');
+
+    Route::get('/businesses/{business}/reports/summary', [ReportController::class, 'summary'])
+        ->name('reports.summary');
+    Route::get('/businesses/{business}/reports/appointments.csv', [ReportController::class, 'appointmentsCsv'])
+        ->name('reports.appointments');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');
