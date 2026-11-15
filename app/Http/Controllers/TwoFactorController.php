@@ -40,7 +40,7 @@ class TwoFactorController extends Controller
     /**
      * Habilita o deshabilita el segundo factor del usuario.
      */
-    public function enable(Request $request): JsonResponse
+    public function enable(Request $request): JsonResponse|RedirectResponse
     {
         $data = $request->validate(['two_factor_enabled' => ['required', 'boolean']]);
 

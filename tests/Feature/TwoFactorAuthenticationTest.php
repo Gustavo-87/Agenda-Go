@@ -94,6 +94,27 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $user->id, 'two_factor_enabled' => true]);
     }
 
+    public function test_two_factor_can_be_enabled_and_disabled_from_the_web_form(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Professional]);
+
+        $this->actingAs($user)
+            ->from('/configuracion')
+            ->patch('/profile/2fa', ['two_factor_enabled' => 1])
+            ->assertRedirect('/configuracion')
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'two_factor_enabled' => true]);
+
+        $this->actingAs($user)
+            ->from('/configuracion')
+            ->patch('/profile/2fa', ['two_factor_enabled' => 0])
+            ->assertRedirect('/configuracion')
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'two_factor_enabled' => false]);
+    }
+
     public function test_admin_panel_requires_two_factor_verification(): void
     {
         $business = Business::factory()->create();
