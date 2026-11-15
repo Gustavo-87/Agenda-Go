@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AppointmentStatus;
 use App\Jobs\SyncAppointmentToGoogleCalendar;
+use App\Models\Appointment;
 use App\Models\Business;
+use App\Models\Professional;
+use App\Models\Service;
+use App\Models\User;
+use App\Services\DisponibilidadService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +18,8 @@ use Throwable;
 
 class AppointmentController extends Controller
 {
+    public function __construct(private DisponibilidadService $disponibilidad) {}
+
     public function availability(Request $request)
     {
         $data = $request->validate([
@@ -29,31 +37,9 @@ class AppointmentController extends Controller
             abort(422, 'Servicio no disponible');
         }
 
-        $slots = [];
-        $day = Carbon::parse($data['date']);
-        $now = now('America/Bogota');
-
-        for ($minute = 9 * 60; $minute + $service->duration_minutes <= 18 * 60; $minute += 30) {
-            $start = $day->copy()->startOfDay()->addMinutes($minute);
-            $end = $start->copy()->addMinutes($service->duration_minutes);
-
-            if ($start->lessThanOrEqualTo($now)) {
-                continue;
-            }
-
-            $occupied = DB::table('appointments')
-                ->where('professional_id', $data['professional_id'])
-                ->where('status', 'confirmed')
-                ->where('starts_at', '<', $end->format('Y-m-d H:i:s'))
-                ->where('ends_at', '>', $start->format('Y-m-d H:i:s'))
-                ->exists();
-
-            if (! $occupied) {
-                $slots[] = $start->format('H:i');
-            }
-        }
-
-        return response()->json(['available' => $slots]);
+        return response()->json([
+            'available' => $this->disponibilidad->slots($professional, $service, $data['date']),
+        ]);
     }
 
     public function store(Request $request)
@@ -66,7 +52,6 @@ class AppointmentController extends Controller
             'starts_at' => 'required|date_format:Y-m-d H:i:s',
         ]);
 
-        $start = Carbon::createFromFormat('Y-m-d H:i:s', $data['starts_at']);
         [$professional, $service] = $this->recursoDelCanal(
             (int) $data['professional_id'],
             (int) $data['service_id']
@@ -76,46 +61,43 @@ class AppointmentController extends Controller
             abort(422, 'Profesional o servicio no disponible');
         }
 
-        $end = $start->copy()->addMinutes($service->duration_minutes);
-        $minute = $start->hour * 60 + $start->minute;
+        $start = Carbon::createFromFormat('Y-m-d H:i:s', $data['starts_at']);
+        $end = $start->copy()->addMinutes((int) $service->duration_minutes);
 
-        if ($start->lessThanOrEqualTo(now('America/Bogota'))
-            || $minute < 540
-            || $minute % 30 !== 0
-            || $end->toDateString() !== $start->toDateString()
-            || $end->hour * 60 + $end->minute > 1080) {
-            throw ValidationException::withMessages([
-                'starts_at' => 'Horario fuera de disponibilidad',
-            ]);
+        if (! in_array($start->format('H:i'), $this->disponibilidad->slots($professional, $service, $start->toDateString()), true)) {
+            throw ValidationException::withMessages(['starts_at' => 'Horario fuera de disponibilidad']);
         }
 
         try {
-            $id = DB::transaction(function () use ($data, $start, $end) {
-                $occupied = DB::table('appointments')
-                    ->where('professional_id', $data['professional_id'])
-                    ->where('status', 'confirmed')
-                    ->where('starts_at', '<', $end->format('Y-m-d H:i:s'))
-                    ->where('ends_at', '>', $start->format('Y-m-d H:i:s'))
-                    ->exists();
-
-                if ($occupied) {
-                    throw ValidationException::withMessages([
-                        'starts_at' => 'Este horario ya está reservado',
-                    ]);
+            $id = DB::transaction(function () use ($data, $professional, $service, $start, $end) {
+                if ($this->disponibilidad->estaOcupado($professional, $start, $end)) {
+                    throw ValidationException::withMessages(['starts_at' => 'Este horario ya está reservado']);
                 }
 
+                $business = $professional->business;
+                $confirmada = (bool) $business->booking_auto_confirm;
+
                 return DB::table('appointments')->insertGetId([
-                    ...$data,
+                    'professional_id' => $professional->id,
+                    'service_id' => $service->id,
+                    'business_id' => $business->id,
+                    'customer_name' => $data['customer_name'],
+                    'customer_phone' => $data['customer_phone'],
+                    'starts_at' => $start->format('Y-m-d H:i:s'),
                     'ends_at' => $end->format('Y-m-d H:i:s'),
-                    'status' => 'confirmed',
+                    'status' => $confirmada
+                        ? AppointmentStatus::Confirmed->value
+                        : AppointmentStatus::Pending->value,
+                    'pending_expires_at' => $confirmada
+                        ? null
+                        : now()->addMinutes((int) $business->booking_pending_ttl_minutes),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Throwable $e) {
-            if ($e instanceof ValidationException) {
-                throw $e;
-            }
             report($e);
             abort(503, 'No se pudo confirmar. Intenta nuevamente.');
         }
@@ -128,23 +110,114 @@ class AppointmentController extends Controller
         ], 201);
     }
 
+    public function confirm(Request $request, Appointment $appointment)
+    {
+        $this->assertPuedeGestionarCita($request->user(), $appointment);
+
+        if ($appointment->status !== AppointmentStatus::Pending->value) {
+            throw ValidationException::withMessages([
+                'status' => 'Solo las solicitudes pendientes pueden confirmarse.',
+            ]);
+        }
+
+        $appointment->update([
+            'status' => AppointmentStatus::Confirmed->value,
+            'pending_expires_at' => null,
+        ]);
+
+        return response()->json(['message' => 'Reserva confirmada']);
+    }
+
+    public function cancel(Request $request, Appointment $appointment)
+    {
+        $this->assertPuedeGestionarCita($request->user(), $appointment);
+
+        if (! in_array($appointment->status, [
+            AppointmentStatus::Pending->value,
+            AppointmentStatus::Confirmed->value,
+        ], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'Esta reserva ya no puede cancelarse.',
+            ]);
+        }
+
+        $appointment->update([
+            'status' => AppointmentStatus::Cancelled->value,
+            'pending_expires_at' => null,
+        ]);
+
+        return response()->json(['message' => 'Reserva cancelada']);
+    }
+
+    public function reschedule(Request $request, Appointment $appointment)
+    {
+        $this->assertPuedeGestionarCita($request->user(), $appointment);
+
+        if (! in_array($appointment->status, [
+            AppointmentStatus::Pending->value,
+            AppointmentStatus::Confirmed->value,
+        ], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'Esta reserva no puede reprogramarse.',
+            ]);
+        }
+
+        $data = $request->validate(['starts_at' => 'required|date_format:Y-m-d H:i:s']);
+
+        $professional = $appointment->professional;
+        $service = $appointment->service;
+        $start = Carbon::createFromFormat('Y-m-d H:i:s', $data['starts_at']);
+        $end = $start->copy()->addMinutes((int) $service->duration_minutes);
+
+        if (! in_array($start->format('H:i'), $this->disponibilidad->slots($professional, $service, $start->toDateString()), true)) {
+            throw ValidationException::withMessages(['starts_at' => 'Horario fuera de disponibilidad']);
+        }
+
+        if ($this->disponibilidad->estaOcupado($professional, $start, $end, $appointment->id)) {
+            throw ValidationException::withMessages(['starts_at' => 'Este horario ya está reservado']);
+        }
+
+        $business = $professional->business;
+        $pendiente = $appointment->status === AppointmentStatus::Pending->value;
+
+        $appointment->update([
+            'starts_at' => $start->format('Y-m-d H:i:s'),
+            'ends_at' => $end->format('Y-m-d H:i:s'),
+            'pending_expires_at' => $pendiente
+                ? now()->addMinutes((int) $business->booking_pending_ttl_minutes)
+                : null,
+        ]);
+
+        return response()->json(['message' => 'Reserva reprogramada']);
+    }
+
+    /**
+     * El usuario vinculado al profesional o quien gestione su negocio.
+     */
+    private function assertPuedeGestionarCita(User $user, Appointment $appointment): void
+    {
+        $professional = $appointment->professional;
+
+        $autorizado = $professional !== null
+            && ($user->can('manage', $professional) || $professional->user_id === $user->id);
+
+        abort_unless($autorizado, 403);
+    }
+
     /**
      * Resolve the professional and service of a booking, rejecting
      * resources outside the booking channel's business or mixed
      * across businesses.
      *
-     * @return array{0: object, 1: object}
+     * @return array{0: Professional, 1: Service}
      */
     private function recursoDelCanal(int $professionalId, int $serviceId): array
     {
         $businessId = Business::bookingChannelId();
 
-        $professional = DB::table('professionals')
-            ->where('id', $professionalId)
-            ->first();
+        $professional = Professional::find($professionalId);
 
-        $service = DB::table('services')
-            ->where('id', $serviceId)
+        $service = Service::whereKey($serviceId)
             ->where('professional_id', $professionalId)
             ->first();
 

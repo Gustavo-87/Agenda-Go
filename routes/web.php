@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ProfessionalController;
@@ -74,4 +76,14 @@ Route::middleware('auth')->group(function () {
         ->name('holidays.store');
     Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])
         ->name('holidays.destroy');
+
+    Route::patch('/businesses/{business}/booking-policy', [BusinessController::class, 'updateBookingPolicy'])
+        ->name('businesses.booking-policy');
+
+    Route::post('/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
+        ->name('appointments.confirm');
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
+        ->name('appointments.cancel');
+    Route::post('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
+        ->name('appointments.reschedule');
 });

@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'slug', 'sector', 'email', 'phone', 'active'])]
+#[Fillable([
+    'name', 'slug', 'sector', 'email', 'phone', 'active',
+    'booking_min_notice_minutes', 'booking_max_advance_days',
+    'booking_auto_confirm', 'booking_pending_ttl_minutes',
+])]
 class Business extends Model
 {
     /** @use HasFactory<BusinessFactory> */
