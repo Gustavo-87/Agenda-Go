@@ -9,23 +9,31 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered(): void
+    public function test_public_registration_is_disabled(): void
     {
-        $response = $this->get('/register');
+        $this->get('/register')->assertNotFound();
 
-        $response->assertStatus(200);
+        $this->post('/register', [
+            'name' => 'Intruso',
+            'email' => 'intruso@viglam.test',
+            'password' => 'password-secreta',
+            'password_confirmation' => 'password-secreta',
+        ])->assertNotFound();
+
+        $this->assertDatabaseCount('users', 0);
     }
 
-    public function test_new_users_can_register(): void
+    public function test_registration_cannot_create_admins_or_businesses(): void
     {
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
+        $this->post('/register', [
+            'name' => 'Intruso',
+            'email' => 'intruso@viglam.test',
+            'password' => 'password-secreta',
+            'password_confirmation' => 'password-secreta',
+            'role' => 'super_admin',
+            'business_id' => 1,
+        ])->assertNotFound();
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertDatabaseCount('users', 0);
     }
 }

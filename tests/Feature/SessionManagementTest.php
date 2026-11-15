@@ -24,7 +24,7 @@ class SessionManagementTest extends TestCase
 
             $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Cerrar sesión');
 
-            $this->post('/logout')->assertRedirect('/');
+            $this->post('/logout')->assertRedirect(route('login'));
 
             $this->assertGuest();
 
@@ -32,6 +32,16 @@ class SessionManagementTest extends TestCase
             $this->get('/agenda')->assertRedirect(route('login'));
             $this->get('/admin')->assertRedirect(route('login'));
         }
+    }
+
+    public function test_the_landing_page_presents_the_product(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Tu negocio, organizado en un solo lugar')
+            ->assertSee('Plataforma de reservas para negocios de servicios')
+            ->assertSee('Iniciar sesión')
+            ->assertSee('Registrarse');
     }
 
     public function test_the_password_reset_flow_works_by_email(): void
@@ -146,7 +156,7 @@ class SessionManagementTest extends TestCase
 
         $this->post('/2fa', ['code' => $codigo])->assertRedirect(route('dashboard', absolute: false));
 
-        $this->post('/logout')->assertRedirect('/');
+        $this->post('/logout')->assertRedirect(route('login'));
         $this->assertGuest();
         $this->get('/dashboard')->assertRedirect(route('login'));
     }

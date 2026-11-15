@@ -325,7 +325,7 @@ class WebInterfaceTest extends TestCase
     public function test_forms_render_submit_buttons(): void
     {
         $this->get('/login')->assertOk()->assertSee('type="submit"', false);
-        $this->get('/register')->assertOk()->assertSee('type="submit"', false);
+        $this->get('/forgot-password')->assertOk()->assertSee('type="submit"', false);
 
         $user = User::factory()->create(['role' => UserRole::Professional]);
         $this->actingAs($user)->get('/configuracion')->assertOk()->assertSee('type="submit"', false);
