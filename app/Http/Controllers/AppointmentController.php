@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AppointmentStatus;
+use App\Jobs\EnviarNotificacionWhatsApp;
 use App\Jobs\SyncAppointmentToGoogleCalendar;
 use App\Models\Appointment;
 use App\Models\Business;
@@ -125,6 +126,12 @@ class AppointmentController extends Controller
             'pending_expires_at' => null,
         ]);
 
+        EnviarNotificacionWhatsApp::dispatch(
+            $appointment->customer_phone,
+            'Tu cita fue confirmada para '.$appointment->starts_at.'.',
+            $appointment->business_id
+        );
+
         return response()->json(['message' => 'Reserva confirmada']);
     }
 
@@ -145,6 +152,12 @@ class AppointmentController extends Controller
             'status' => AppointmentStatus::Cancelled->value,
             'pending_expires_at' => null,
         ]);
+
+        EnviarNotificacionWhatsApp::dispatch(
+            $appointment->customer_phone,
+            'Tu cita fue cancelada. Si deseas reprogramarla, escríbenos.',
+            $appointment->business_id
+        );
 
         return response()->json(['message' => 'Reserva cancelada']);
     }

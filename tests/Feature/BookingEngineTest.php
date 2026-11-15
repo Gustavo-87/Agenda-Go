@@ -209,6 +209,7 @@ class BookingEngineTest extends TestCase
 
     public function test_status_transitions_are_validated(): void
     {
+        Queue::fake();
         [$business, $professional, $service] = $this->escenario();
         $user = User::factory()->create([
             'business_id' => $business->id,

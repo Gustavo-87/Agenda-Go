@@ -12,8 +12,19 @@ use Throwable;
 
 class FlujoReservasService
 {
-    public function procesar(array $solicitud): array
+    private ?int $businessId = null;
+
+    /**
+     * Identidad del canal: negocio explícito o canal configurado.
+     */
+    private function canalId(): ?int
     {
+        return $this->businessId ??= Business::bookingChannelId();
+    }
+
+    public function procesar(array $solicitud, ?int $businessId = null): array
+    {
+        $this->businessId = $businessId;
         if (($solicitud['action'] ?? '') === 'ping') {
             return ['data' => ['status' => 'active']];
         }
@@ -40,12 +51,12 @@ class FlujoReservasService
 
             $prof = DB::table('professionals')
                 ->where('id', $profesional)->where('active', true)
-                ->where('business_id', Business::bookingChannelId())->first();
+                ->where('business_id', $this->canalId())->first();
 
             $serv = DB::table('services')
                 ->where('id', $servicio)
                 ->where('professional_id', $profesional)
-                ->where('business_id', Business::bookingChannelId())
+                ->where('business_id', $this->canalId())
                 ->where('active', true)->first();
 
             if (! $prof || ! $serv || mb_strlen($nombre) < 2 ||
@@ -144,14 +155,14 @@ class FlujoReservasService
     ): array {
         $profesionales = DB::table('professionals')
             ->where('active', true)
-            ->where('business_id', Business::bookingChannelId())
+            ->where('business_id', $this->canalId())
             ->orderBy('id')->get();
 
         $profesionalValido = $profesionales->contains('id', $profesional);
 
         $servicios = $profesionalValido
             ? DB::table('services')->where('professional_id', $profesional)
-                ->where('business_id', Business::bookingChannelId())
+                ->where('business_id', $this->canalId())
                 ->where('active', true)->orderBy('id')->get()
             : collect();
 

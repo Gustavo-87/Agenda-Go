@@ -12,9 +12,10 @@ use Throwable;
 
 class ReservaWhatsAppService
 {
-    public function procesar(string $telefono, string $mensaje): string
+    public function procesar(string $telefono, string $mensaje, ?int $businessId = null): string
     {
-        $clave = 'reserva_whatsapp_'.hash('sha256', $telefono);
+        $businessId ??= Business::bookingChannelId();
+        $clave = 'reserva_whatsapp_'.$businessId.'_'.hash('sha256', $telefono);
         $estado = Cache::get($clave);
         $mensaje = trim($mensaje);
 
@@ -22,17 +23,17 @@ class ReservaWhatsAppService
             $estado = ['paso' => 'profesional'];
             Cache::put($clave, $estado, now()->addHours(2));
 
-            return $this->menuProfesionales();
+            return $this->menuProfesionales($businessId);
         }
 
         switch ($estado['paso']) {
             case 'profesional':
                 $items = DB::table('professionals')->where('active', true)
-                    ->where('business_id', Business::bookingChannelId())
+                    ->where('business_id', $businessId)
                     ->orderBy('id')->get();
                 $seleccion = $this->elegir($items, $mensaje);
                 if (! $seleccion) {
-                    return $this->menuProfesionales();
+                    return $this->menuProfesionales($businessId);
                 }
 
                 $estado['profesional_id'] = $seleccion->id;
@@ -162,10 +163,10 @@ class ReservaWhatsAppService
         )->implode("\n");
     }
 
-    private function menuProfesionales(): string
+    private function menuProfesionales(?int $businessId): string
     {
         $items = DB::table('professionals')->where('active', true)
-            ->where('business_id', Business::bookingChannelId())
+            ->where('business_id', $businessId)
             ->orderBy('id')->pluck('name');
 
         return $items->isEmpty()
