@@ -142,6 +142,13 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Revocación y reenvío seguro de invitaciones desde la interfaz (detalle del negocio y Gestión): el reenvío invalida el enlace anterior y emite uno nuevo; la revocación conserva el registro histórico.
 - E2E verificado: alta de negocio → activación → invitación del administrador → establecimiento de contraseña → acceso con 2FA → gestión de profesionales, servicios, horarios y reservas, con aislamiento entre negocios.
 
+### Autenticación y sesiones
+
+- Cierre de sesión visible (escritorio y móvil) para todos los roles, con invalidación real de sesión: las rutas protegidas redirigen al inicio de sesión después.
+- Recuperación de contraseñas por correo completa: solicitud de enlace, establecimiento de nueva contraseña y rechazo de tokens vencidos o inválidos, con mensajes en español.
+- Cambio de contraseña desde Perfil (con contraseña actual) verificado extremo a extremo.
+- Compatibilidad confirmada con 2FA e invitaciones; pruebas con correos simulados.
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
