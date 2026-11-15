@@ -1,4 +1,4 @@
-# AgendaNails — Requisitos funcionales
+# AgendaGo — Requisitos funcionales
 
 Estado: perfilamiento aprobado, pendiente de implementación y validación.
 Alcance: plataforma SaaS multisectorial para negocios que trabajan mediante citas.
@@ -170,7 +170,7 @@ Presentar el aviso durante la primera reserva y conservar evidencia de la autori
 ### RF-WA-001 — Número de WhatsApp por negocio
 Prioridad: P0 | Estado: Condicionado
 
-Cada negocio utilizará un número propio, configurado inicialmente por AgendaNails.
+Cada negocio utilizará un número propio, configurado inicialmente por AgendaGo.
 
 ### RF-NOT-001 — Recordatorio de cita
 Prioridad: P1 | Estado: Pendiente
@@ -233,7 +233,7 @@ Permitir exportar reportes autorizados a Excel y PDF.
 ### RF-CAL-001 — Google Calendar opcional
 Prioridad: P1 | Estado: Parcial
 
-Permitir sincronización unidireccional desde AgendaNails hacia Google Calendar, sin depender de Google para confirmar reservas.
+Permitir sincronización unidireccional desde AgendaGo hacia Google Calendar, sin depender de Google para confirmar reservas.
 
 ## 11. Alcance específico de Viglam
 

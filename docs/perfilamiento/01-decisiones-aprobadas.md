@@ -1,8 +1,8 @@
-# AgendaNails — Decisiones aprobadas
+# AgendaGo — Decisiones aprobadas
 
 Estado: perfilamiento funcional y comercial.
 Primer negocio: Viglam.
-Producto: AgendaNails, plataforma SaaS multiempresa.
+Producto: AgendaGo, plataforma SaaS multiempresa.
 
 ## 1. Modelo comercial
 - Membresía mensual única con todas las funcionalidades.
@@ -23,7 +23,7 @@ Producto: AgendaNails, plataforma SaaS multiempresa.
 ## 2. Modelo multiempresa
 - Cada negocio tendrá su propio número de WhatsApp.
 - El superadministrador registrará y activará los negocios.
-- AgendaNails configurará inicialmente WhatsApp y medios de pago.
+- AgendaGo configurará inicialmente WhatsApp y medios de pago.
 - Datos y operaciones aislados por negocio.
 - Acceso desde un dominio único con autenticación y permisos.
 
@@ -63,7 +63,7 @@ Producto: AgendaNails, plataforma SaaS multiempresa.
 - No se exigirán anticipos para reservar.
 - Pago completo opcional mediante PSE o llaves.
 - Recaudo directamente a la cuenta del negocio.
-- AgendaNails configurará inicialmente los medios de pago.
+- AgendaGo configurará inicialmente los medios de pago.
 - Comprobante digital y confirmación automática por WhatsApp.
 - No se implementará facturación electrónica inicialmente.
 - La facturación tributaria será responsabilidad del negocio.
@@ -89,8 +89,8 @@ Producto: AgendaNails, plataforma SaaS multiempresa.
 
 ## 9. Google Calendar
 - Integración opcional por profesional.
-- Sincronización desde AgendaNails hacia Google Calendar.
-- Cambios realizados directamente en Google Calendar no modifican AgendaNails.
+- Sincronización desde AgendaGo hacia Google Calendar.
+- Cambios realizados directamente en Google Calendar no modifican AgendaGo.
 
 ## 10. Soporte
 - Lunes a sábado, de 8:00 a. m. a 6:00 p. m., hora de Colombia.
@@ -130,9 +130,9 @@ continúan pendientes.
 La siguiente etapa será elaborar requisitos trazables,
 criterios de aceptación, arquitectura y plan de sprints.
 
-## 14. Alcance multisectorial de AgendaNails
+## 14. Alcance multisectorial de AgendaGo
 
-- AgendaNails será una plataforma SaaS de reservas para negocios de servicios.
+- AgendaGo será una plataforma SaaS de reservas para negocios de servicios.
 - No estará limitada a manicura o servicios de uñas.
 - Podrá utilizarse en peluquerías, barberías, centros de estética y otros negocios que operen mediante citas.
 - Viglam será el primer cliente y caso de validación comercial.

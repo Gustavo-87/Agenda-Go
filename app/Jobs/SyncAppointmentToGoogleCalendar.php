@@ -14,9 +14,7 @@ class SyncAppointmentToGoogleCalendar implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public int $appointmentId)
-    {
-    }
+    public function __construct(public int $appointmentId) {}
 
     public function handle(GoogleCalendarService $calendar): void
     {
@@ -26,13 +24,13 @@ class SyncAppointmentToGoogleCalendar implements ShouldQueue
             ->whereNull('google_event_id')
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return;
         }
 
         $professional = Professional::find($appointment->professional_id);
 
-        if (!$professional?->google_refresh_token) {
+        if (! $professional?->google_refresh_token) {
             return;
         }
 
@@ -42,7 +40,7 @@ class SyncAppointmentToGoogleCalendar implements ShouldQueue
 
         $eventId = $calendar->createEvent(
             $professional,
-            'AgendaNails - ' . ($service->name ?? 'Cita'),
+            'AgendaGo - '.($service->name ?? 'Cita'),
             $appointment->starts_at,
             $appointment->ends_at
         );

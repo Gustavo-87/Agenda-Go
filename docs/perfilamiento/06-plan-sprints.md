@@ -1,4 +1,4 @@
-# AgendaNails — Plan de sprints
+# AgendaGo — Plan de sprints
 
 Estado: planificación inicial.
 Producto: SaaS multisectorial de reservas.

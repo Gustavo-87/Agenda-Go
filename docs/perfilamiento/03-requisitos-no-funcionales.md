@@ -1,4 +1,4 @@
-# AgendaNails — Requisitos no funcionales
+# AgendaGo — Requisitos no funcionales
 
 Estado: perfilamiento aprobado.
 Alcance: plataforma SaaS multisectorial.
@@ -196,7 +196,7 @@ Prioridad: P1
 Prioridad: P1
 
 - La sincronización será opcional y unidireccional.
-- AgendaNails será la fuente principal de las reservas.
+- AgendaGo será la fuente principal de las reservas.
 - Los fallos de Google no impedirán registrar citas.
 - Los reintentos no crearán eventos duplicados.
 

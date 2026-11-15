@@ -1,4 +1,4 @@
-# AgendaNails — Reglas de negocio
+# AgendaGo — Reglas de negocio
 
 Estado: decisiones aprobadas durante el perfilamiento.
 Alcance: SaaS multisectorial.
@@ -57,7 +57,7 @@ Primer cliente: Viglam.
 - RN-037: Los pagos de servicios llegarán directamente al negocio correspondiente.
 - RN-038: PSE y llaves estarán sujetos a disponibilidad e integración del proveedor.
 - RN-039: Un pago solo se considerará confirmado mediante evidencia verificable.
-- RN-040: AgendaNails generará comprobantes digitales y avisos de pago.
+- RN-040: AgendaGo generará comprobantes digitales y avisos de pago.
 - RN-041: Cada negocio será responsable de sus obligaciones de facturación electrónica.
 - RN-042: Los pagos de servicios y las membresías se registrarán separadamente.
 

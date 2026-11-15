@@ -1,4 +1,4 @@
-# AgendaNails — Arquitectura técnica
+# AgendaGo — Arquitectura técnica
 
 Estado: arquitectura propuesta, pendiente de validación.
 Producto: SaaS multisectorial de gestión de reservas.
@@ -252,7 +252,7 @@ La ejecución deberá ser repetible sin duplicar operaciones.
 
 Separar completamente:
 
-A. Pagos de membresías a AgendaNails.
+A. Pagos de membresías a AgendaGo.
 B. Pagos de servicios a los negocios.
 
 Los pagos de servicios deberán liquidarse directamente
@@ -269,7 +269,7 @@ No se almacenarán datos sensibles de tarjetas.
 
 - Integración opcional por profesional.
 - Sincronización unidireccional.
-- AgendaNails como fuente principal de disponibilidad.
+- AgendaGo como fuente principal de disponibilidad.
 - Operaciones mediante trabajos en cola.
 - Reintentos controlados.
 - Prevención de eventos duplicados.
