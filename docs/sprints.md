@@ -94,6 +94,20 @@ Criterios de cierre pendientes (externos): copias restaurables verificadas, inte
 - D-09: 2FA por código de correo (sin dependencias externas); el panel `/admin` exige verificación.
 - D-10: exportación de reportes en CSV, Excel (PhpSpreadsheet) y PDF (Dompdf), con aislamiento por negocio.
 
+## Interfaz web (preparación de producción)
+
+Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre las rutas existentes.
+
+- Panel principal con indicadores y accesos rápidos por rol (`/dashboard`).
+- Gestión de profesionales, servicios, horarios, excepciones y festivos (`/gestion`).
+- Agenda visual con acciones de reserva (`/agenda`).
+- Clientes, ficha e historial (`/clientes`, `/customers/{customer}`).
+- Reportes operativos con exportaciones y pagos (`/reportes`).
+- Administración SaaS: negocios, membresías y verificación de pagos (`/admin`).
+- Configuración del negocio y seguridad de la cuenta (`/configuracion`).
+- Respuestas duales: los formularios web redirigen con mensajes flash y las APIs JSON conservan su contrato (pruebas existentes intactas).
+- Navegación superior responsive sin menú lateral, con opciones según rol.
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
@@ -101,4 +115,3 @@ Criterios de cierre pendientes (externos): copias restaurables verificadas, inte
 3. Selección de proveedor de pagos (renovación automática de membresías y recaudo de servicios).
 4. Copias en almacenamiento externo y ejercicios de restauración.
 5. Suscripción push real (VAPID / proveedor externo).
-6. Extender 2FA/auditoría si el alcance lo exige en nuevas rutas.
