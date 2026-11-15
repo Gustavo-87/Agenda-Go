@@ -149,6 +149,12 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Cambio de contraseña desde Perfil (con contraseña actual) verificado extremo a extremo.
 - Compatibilidad confirmada con 2FA e invitaciones; pruebas con correos simulados.
 
+### Página pública y registro
+
+- Página de bienvenida (`/`) propia con identidad AgendaGo (azul petróleo y turquesa): presentación del producto, funciones y botones Iniciar sesión y Registrarse.
+- Registro público deshabilitado (modelo SaaS por invitaciones): `/register` responde 404 y no es posible crear administradores, negocios ni usuarios por esa vía; se conservan las rutas de recuperación de contraseña.
+- El cierre de sesión redirige a `/login`.
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
