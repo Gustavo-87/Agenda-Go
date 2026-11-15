@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'reservas' => [
+        'business_slug' => env('RESERVAS_BUSINESS_SLUG', 'viglam'),
+    ],
+
     'whatsapp' => [
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
         'app_secret' => env('WHATSAPP_APP_SECRET'),
@@ -9,15 +13,11 @@ return [
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
     ],
 
-
-
     'google_calendar' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
     ],
-
-
 
     /*
     |--------------------------------------------------------------------------

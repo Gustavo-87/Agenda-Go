@@ -26,6 +26,17 @@ class Business extends Model
     }
 
     /**
+     * Id of the business that owns the public booking channel
+     * (WhatsApp bot, WhatsApp flows and reservation API).
+     */
+    public static function bookingChannelId(): ?int
+    {
+        return static::query()
+            ->where('slug', (string) config('services.reservas.business_slug'))
+            ->value('id');
+    }
+
+    /**
      * @return HasMany<Professional, $this>
      */
     public function professionals(): HasMany

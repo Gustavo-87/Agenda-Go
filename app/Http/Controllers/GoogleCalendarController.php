@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Professional;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -11,10 +12,7 @@ class GoogleCalendarController extends Controller
 {
     public function redirect(Request $request, Professional $professional)
     {
-        abort_unless(
-            $professional->user_id === $request->user()->id,
-            403
-        );
+        abort_unless($this->puedeGestionar($request->user(), $professional), 403);
 
         $state = Str::random(40);
 
@@ -23,7 +21,7 @@ class GoogleCalendarController extends Controller
             'professional_id' => $professional->id,
         ]);
 
-        $url = 'https://accounts.google.com/o/oauth2/v2/auth?' .
+        $url = 'https://accounts.google.com/o/oauth2/v2/auth?'.
             http_build_query([
                 'client_id' => config('services.google_calendar.client_id'),
                 'redirect_uri' => config('services.google_calendar.redirect_uri'),
@@ -50,9 +48,9 @@ class GoogleCalendarController extends Controller
             'Autorización inválida'
         );
 
-        $professional = Professional::whereKey($oauth['professional_id'])
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $professional = Professional::findOrFail($oauth['professional_id']);
+
+        abort_unless($this->puedeGestionar($request->user(), $professional), 403);
 
         $code = $request->query('code');
 
@@ -89,5 +87,15 @@ class GoogleCalendarController extends Controller
 
         return redirect('/dashboard')
             ->with('success', 'Google Calendar conectado correctamente.');
+    }
+
+    /**
+     * The professional's own user, or a user allowed to manage
+     * the professional's business (admin or super admin).
+     */
+    private function puedeGestionar(User $user, Professional $professional): bool
+    {
+        return $professional->user_id === $user->id
+            || ($professional->business !== null && $user->can('manage', $professional->business));
     }
 }

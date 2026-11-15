@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
+use App\Models\Business;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -13,21 +14,26 @@ class ReservaWhatsAppService
 {
     public function procesar(string $telefono, string $mensaje): string
     {
-        $clave = 'reserva_whatsapp_' . hash('sha256', $telefono);
+        $clave = 'reserva_whatsapp_'.hash('sha256', $telefono);
         $estado = Cache::get($clave);
         $mensaje = trim($mensaje);
 
-        if (!$estado || in_array(mb_strtolower($mensaje), ['hola', 'menu', 'menú', 'reiniciar', 'cancelar'])) {
+        if (! $estado || in_array(mb_strtolower($mensaje), ['hola', 'menu', 'menú', 'reiniciar', 'cancelar'])) {
             $estado = ['paso' => 'profesional'];
             Cache::put($clave, $estado, now()->addHours(2));
+
             return $this->menuProfesionales();
         }
 
         switch ($estado['paso']) {
             case 'profesional':
-                $items = DB::table('professionals')->where('active', true)->orderBy('id')->get();
+                $items = DB::table('professionals')->where('active', true)
+                    ->where('business_id', Business::bookingChannelId())
+                    ->orderBy('id')->get();
                 $seleccion = $this->elegir($items, $mensaje);
-                if (!$seleccion) return $this->menuProfesionales();
+                if (! $seleccion) {
+                    return $this->menuProfesionales();
+                }
 
                 $estado['profesional_id'] = $seleccion->id;
                 $estado['paso'] = 'servicio';
@@ -40,7 +46,9 @@ class ReservaWhatsAppService
                     ->where('active', true)->orderBy('id')->get();
 
                 $seleccion = $this->elegir($items, $mensaje);
-                if (!$seleccion) return $this->menuServicios($estado['profesional_id']);
+                if (! $seleccion) {
+                    return $this->menuServicios($estado['profesional_id']);
+                }
 
                 $estado['servicio_id'] = $seleccion->id;
                 $estado['paso'] = 'fecha';
@@ -49,26 +57,28 @@ class ReservaWhatsAppService
 
             case 'fecha':
                 $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', $mensaje);
-                if (!$fecha || $fecha->format('Y-m-d') !== $mensaje
+                if (! $fecha || $fecha->format('Y-m-d') !== $mensaje
                     || $mensaje < now('America/Bogota')->toDateString()) {
                     return 'Fecha inválida o pasada. Escribe una fecha en formato AAAA-MM-DD.';
                 }
 
                 $horas = $this->horarios($estado, $mensaje);
-                if (!$horas) return 'No hay horarios disponibles ese día. Elige otra fecha.';
+                if (! $horas) {
+                    return 'No hay horarios disponibles ese día. Elige otra fecha.';
+                }
 
                 $estado['fecha'] = $mensaje;
                 $estado['horas'] = $horas;
                 $estado['paso'] = 'hora';
                 $respuesta = "Horarios disponibles:\n"
-                    . $this->numerar($horas)
-                    . "\nResponde con el número del horario.";
+                    .$this->numerar($horas)
+                    ."\nResponde con el número del horario.";
                 break;
 
             case 'hora':
                 $indice = ctype_digit($mensaje) ? (int) $mensaje - 1 : -1;
-                if (!isset($estado['horas'][$indice])) {
-                    return "Selecciona un horario válido:\n" . $this->numerar($estado['horas']);
+                if (! isset($estado['horas'][$indice])) {
+                    return "Selecciona un horario válido:\n".$this->numerar($estado['horas']);
                 }
 
                 $estado['hora'] = $estado['horas'][$indice];
@@ -84,18 +94,21 @@ class ReservaWhatsAppService
                 $estado['nombre'] = $mensaje;
                 $estado['paso'] = 'confirmar';
                 $respuesta = "Confirma tu cita:\n"
-                    . "Fecha: {$estado['fecha']}\n"
-                    . "Hora: {$estado['hora']}\n"
-                    . "Nombre: {$estado['nombre']}\n\n"
-                    . "1. Confirmar\n2. Cancelar";
+                    ."Fecha: {$estado['fecha']}\n"
+                    ."Hora: {$estado['hora']}\n"
+                    ."Nombre: {$estado['nombre']}\n\n"
+                    ."1. Confirmar\n2. Cancelar";
                 break;
 
             case 'confirmar':
                 if ($mensaje === '2') {
                     Cache::forget($clave);
+
                     return 'Reserva cancelada. Escribe HOLA para comenzar nuevamente.';
                 }
-                if ($mensaje !== '1') return 'Responde 1 para confirmar o 2 para cancelar.';
+                if ($mensaje !== '1') {
+                    return 'Responde 1 para confirmar o 2 para cancelar.';
+                }
 
                 try {
                     $respuestaApi = app(AppointmentController::class)->store(
@@ -104,53 +117,60 @@ class ReservaWhatsAppService
                             'service_id' => $estado['servicio_id'],
                             'customer_name' => $estado['nombre'],
                             'customer_phone' => $telefono,
-                            'starts_at' => $estado['fecha'] . ' ' . $estado['hora'] . ':00',
+                            'starts_at' => $estado['fecha'].' '.$estado['hora'].':00',
                         ])
                     );
 
                     $id = $respuestaApi->getData(true)['appointment_id'];
                     Cache::forget($clave);
+
                     return "¡Reserva confirmada! Tu número de cita es {$id}. "
-                        . "Fecha: {$estado['fecha']}, hora: {$estado['hora']}.";
+                        ."Fecha: {$estado['fecha']}, hora: {$estado['hora']}.";
                 } catch (ValidationException $e) {
                     $estado['paso'] = 'fecha';
                     Cache::put($clave, $estado, now()->addHours(2));
+
                     return 'Ese horario ya no está disponible. Escribe otra fecha (AAAA-MM-DD).';
                 } catch (Throwable $e) {
                     report($e);
+
                     return 'No pudimos confirmar la cita. Responde 1 para reintentar.';
                 }
 
             default:
                 Cache::forget($clave);
+
                 return 'Escribe HOLA para comenzar.';
         }
 
         Cache::put($clave, $estado, now()->addHours(2));
+
         return $respuesta;
     }
 
     private function elegir($items, string $mensaje)
     {
         $indice = ctype_digit($mensaje) ? (int) $mensaje - 1 : -1;
+
         return $items->values()->get($indice);
     }
 
     private function numerar($items): string
     {
         return collect($items)->values()->map(
-            fn ($item, $i) => ($i + 1) . '. ' . $item
+            fn ($item, $i) => ($i + 1).'. '.$item
         )->implode("\n");
     }
 
     private function menuProfesionales(): string
     {
         $items = DB::table('professionals')->where('active', true)
+            ->where('business_id', Business::bookingChannelId())
             ->orderBy('id')->pluck('name');
 
         return $items->isEmpty()
             ? 'No hay profesionales disponibles.'
-            : "¡Bienvenida a Viglam!\nElige una profesional:\n" . $this->numerar($items);
+            : "¡Bienvenida a Viglam!\nElige una profesional:\n".$this->numerar($items);
     }
 
     private function menuServicios(int $profesionalId): string
@@ -158,10 +178,12 @@ class ReservaWhatsAppService
         $items = DB::table('services')->where('professional_id', $profesionalId)
             ->where('active', true)->orderBy('id')->get();
 
-        if ($items->isEmpty()) return 'Esta profesional no tiene servicios disponibles. Escribe MENÚ.';
+        if ($items->isEmpty()) {
+            return 'Esta profesional no tiene servicios disponibles. Escribe MENÚ.';
+        }
 
-        return "Elige un servicio:\n" . $this->numerar(
-            $items->map(fn ($s) => "{$s->name} - $" . number_format($s->price, 0, ',', '.'))
+        return "Elige un servicio:\n".$this->numerar(
+            $items->map(fn ($s) => "{$s->name} - $".number_format($s->price, 0, ',', '.'))
         );
     }
 

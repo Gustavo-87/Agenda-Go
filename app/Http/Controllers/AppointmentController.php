@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Jobs\SyncAppointmentToGoogleCalendar;
+use App\Models\Business;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 use Throwable;
 
 class AppointmentController extends Controller
@@ -19,13 +20,12 @@ class AppointmentController extends Controller
             'date' => 'required|date_format:Y-m-d',
         ]);
 
-        $service = DB::table('services')
-            ->where('id', $data['service_id'])
-            ->where('professional_id', $data['professional_id'])
-            ->where('active', true)
-            ->first();
+        [$professional, $service] = $this->recursoDelCanal(
+            (int) $data['professional_id'],
+            (int) $data['service_id']
+        );
 
-        if (!$service || $service->duration_minutes < 1) {
+        if (! $service->active || $service->duration_minutes < 1) {
             abort(422, 'Servicio no disponible');
         }
 
@@ -37,7 +37,9 @@ class AppointmentController extends Controller
             $start = $day->copy()->startOfDay()->addMinutes($minute);
             $end = $start->copy()->addMinutes($service->duration_minutes);
 
-            if ($start->lessThanOrEqualTo($now)) continue;
+            if ($start->lessThanOrEqualTo($now)) {
+                continue;
+            }
 
             $occupied = DB::table('appointments')
                 ->where('professional_id', $data['professional_id'])
@@ -46,7 +48,9 @@ class AppointmentController extends Controller
                 ->where('ends_at', '>', $start->format('Y-m-d H:i:s'))
                 ->exists();
 
-            if (!$occupied) $slots[] = $start->format('H:i');
+            if (! $occupied) {
+                $slots[] = $start->format('H:i');
+            }
         }
 
         return response()->json(['available' => $slots]);
@@ -63,18 +67,12 @@ class AppointmentController extends Controller
         ]);
 
         $start = Carbon::createFromFormat('Y-m-d H:i:s', $data['starts_at']);
-        $service = DB::table('services')
-            ->where('id', $data['service_id'])
-            ->where('professional_id', $data['professional_id'])
-            ->where('active', true)
-            ->first();
+        [$professional, $service] = $this->recursoDelCanal(
+            (int) $data['professional_id'],
+            (int) $data['service_id']
+        );
 
-        $professional = DB::table('professionals')
-            ->where('id', $data['professional_id'])
-            ->where('active', true)
-            ->first();
-
-        if (!$service || !$professional || $service->duration_minutes < 1) {
+        if (! $service->active || ! $professional->active || $service->duration_minutes < 1) {
             abort(422, 'Profesional o servicio no disponible');
         }
 
@@ -115,7 +113,9 @@ class AppointmentController extends Controller
                 ]);
             });
         } catch (Throwable $e) {
-            if ($e instanceof ValidationException) throw $e;
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
             report($e);
             abort(503, 'No se pudo confirmar. Intenta nuevamente.');
         }
@@ -126,5 +126,34 @@ class AppointmentController extends Controller
             'message' => 'Reserva confirmada',
             'appointment_id' => $id,
         ], 201);
+    }
+
+    /**
+     * Resolve the professional and service of a booking, rejecting
+     * resources outside the booking channel's business or mixed
+     * across businesses.
+     *
+     * @return array{0: object, 1: object}
+     */
+    private function recursoDelCanal(int $professionalId, int $serviceId): array
+    {
+        $businessId = Business::bookingChannelId();
+
+        $professional = DB::table('professionals')
+            ->where('id', $professionalId)
+            ->first();
+
+        $service = DB::table('services')
+            ->where('id', $serviceId)
+            ->where('professional_id', $professionalId)
+            ->first();
+
+        if (! $professional || ! $service
+            || $professional->business_id != $businessId
+            || $service->business_id != $professional->business_id) {
+            abort(422, 'Profesional o servicio no disponible');
+        }
+
+        return [$professional, $service];
     }
 }

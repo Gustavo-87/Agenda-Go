@@ -17,6 +17,10 @@ class AgendaController extends Controller
             ->join('professionals', 'appointments.professional_id', '=', 'professionals.id')
             ->join('services', 'appointments.service_id', '=', 'services.id')
             ->where('professionals.user_id', $request->user()->id)
+            ->when(
+                $request->user()->business_id !== null,
+                fn ($query) => $query->where('professionals.business_id', $request->user()->business_id)
+            )
             ->whereDate('appointments.starts_at', $date)
             ->select(
                 'appointments.*',

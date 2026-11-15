@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
+use App\Models\Business;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,24 +39,26 @@ class FlujoReservasService
             $telefono = trim((string) ($datos['telefono'] ?? ''));
 
             $prof = DB::table('professionals')
-                ->where('id', $profesional)->where('active', true)->first();
+                ->where('id', $profesional)->where('active', true)
+                ->where('business_id', Business::bookingChannelId())->first();
 
             $serv = DB::table('services')
                 ->where('id', $servicio)
                 ->where('professional_id', $profesional)
+                ->where('business_id', Business::bookingChannelId())
                 ->where('active', true)->first();
 
-            if (!$prof || !$serv || mb_strlen($nombre) < 2 ||
+            if (! $prof || ! $serv || mb_strlen($nombre) < 2 ||
                 mb_strlen($nombre) > 120 ||
-                !preg_match('/^[0-9+ ()-]{7,30}$/', $telefono) ||
-                !in_array($hora, $this->horarios($profesional, $servicio, $fecha), true)) {
+                ! preg_match('/^[0-9+ ()-]{7,30}$/', $telefono) ||
+                ! in_array($hora, $this->horarios($profesional, $servicio, $fecha), true)) {
                 return $this->agenda($profesional, $servicio, $fecha,
                     'Datos inválidos o horario ocupado. Selecciona nuevamente.');
             }
 
             $resumen = "{$prof->name} - {$serv->name}\n"
-                . "{$fecha} a las {$hora}\n"
-                . "Cliente: {$nombre}";
+                ."{$fecha} a las {$hora}\n"
+                ."Cliente: {$nombre}";
 
             $campos = [
                 'resumen' => $resumen,
@@ -94,6 +97,7 @@ class FlujoReservasService
                 ]);
             } catch (Throwable $e) {
                 report($e);
+
                 return $this->respuesta('SUMMARY', [
                     ...$campos,
                     'resumen' => 'No se pudo confirmar. Intenta nuevamente.',
@@ -127,6 +131,7 @@ class FlujoReservasService
             return $respuesta->getData(true)['available'] ?? [];
         } catch (Throwable $e) {
             report($e);
+
             return [];
         }
     }
@@ -138,12 +143,15 @@ class FlujoReservasService
         string $aviso = ''
     ): array {
         $profesionales = DB::table('professionals')
-            ->where('active', true)->orderBy('id')->get();
+            ->where('active', true)
+            ->where('business_id', Business::bookingChannelId())
+            ->orderBy('id')->get();
 
         $profesionalValido = $profesionales->contains('id', $profesional);
 
         $servicios = $profesionalValido
             ? DB::table('services')->where('professional_id', $profesional)
+                ->where('business_id', Business::bookingChannelId())
                 ->where('active', true)->orderBy('id')->get()
             : collect();
 
@@ -158,12 +166,12 @@ class FlujoReservasService
             for ($dia = 0; $dia <= 14; $dia++) {
                 $fechaDia = $inicio->addDays($dia)->format('Y-m-d');
 
-                if (!$this->horarios($profesional, $servicio, $fechaDia)) {
+                if (! $this->horarios($profesional, $servicio, $fechaDia)) {
                     $bloqueadas[] = $fechaDia;
                 }
             }
 
-            if ($fecha && !in_array($fecha, $bloqueadas, true)
+            if ($fecha && ! in_array($fecha, $bloqueadas, true)
                 && $fecha >= $inicio->format('Y-m-d')
                 && $fecha <= $fin->format('Y-m-d')) {
                 $horarios = $this->horarios($profesional, $servicio, $fecha);
