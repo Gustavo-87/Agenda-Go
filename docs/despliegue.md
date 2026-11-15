@@ -32,7 +32,8 @@ Guía operativa para desplegar y mantener AgendaGo (Sprint 8).
 
 ## Seguridad
 
-- 2FA obligatorio para administradores y superadministradores (RN-043): el login siempre desafía código por correo.
+- 2FA obligatorio para administradores y superadministradores (RN-043): el login siempre desafía código por correo (OTP de un solo uso, vigencia 10 minutos, almacenado en caché y validado una sola vez).
+- Recuperación local segura: si el correo no llega en desarrollo, `php artisan two-factor:code {email}` muestra el código pendiente (solo entornos `local` y `testing`; nunca producción). El desafío de 2FA nunca se desactiva globalmente y el envío de correo puede fallar sin bloquear el inicio de sesión.
 - Permisos: `BusinessPolicy`, `ProfessionalPolicy` y `ServicePolicy` aíslan cada negocio; el panel `/admin` exige superadministrador.
 - Auditoría: `audit_logs` registra altas, activaciones, suspensiones y verificación de pagos.
 - Revisión de credenciales: verificar que ningún secreto esté versionado antes de cada despliegue.
