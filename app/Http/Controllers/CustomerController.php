@@ -15,6 +15,7 @@ class CustomerController extends Controller
     {
         $user = $request->user();
         $business = $this->contextoNegocio($request);
+        $q = trim((string) $request->query('q', ''));
 
         if ($business !== null) {
             abort_unless($user->can('view', $business), 403);
@@ -22,7 +23,15 @@ class CustomerController extends Controller
 
         return view('customers.index', [
             'negocio' => $business,
-            'clientes' => $business?->customers()->orderBy('name')->paginate(10) ?? collect(),
+            'q' => $q,
+            'clientes' => $business?->customers()
+                ->when($q !== '', function ($query) use ($q) {
+                    $query->where(function ($inner) use ($q) {
+                        $inner->where('name', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
+                })
+                ->orderBy('name')->paginate(10)->withQueryString() ?? collect(),
             'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }

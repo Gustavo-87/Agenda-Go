@@ -92,8 +92,8 @@
                                     <tr class="text-left text-gray-500 text-xs uppercase tracking-wide">
                                         <th class="py-3 px-5">Hora</th>
                                         <th class="py-3 px-5">Cliente</th>
-                                        <th class="py-3 px-5">Profesional</th>
-                                        <th class="py-3 px-5">Servicio</th>
+                                        <th class="py-3 px-5 hidden md:table-cell">Profesional</th>
+                                        <th class="py-3 px-5 hidden md:table-cell">Servicio</th>
                                         <th class="py-3 px-5">Estado</th>
                                         <th class="py-3 px-5">Acciones</th>
                                     </tr>
@@ -103,8 +103,8 @@
                                         <tr class="hover:bg-warm-50">
                                             <td class="py-3 px-5 font-bold text-petrol">{{ substr($appointment->starts_at, 11, 5) }}</td>
                                             <td class="py-3 px-5">{{ $appointment->customer_name }}</td>
-                                            <td class="py-3 px-5">{{ $appointment->professional?->name }}</td>
-                                            <td class="py-3 px-5">{{ $appointment->service?->name }}</td>
+                                            <td class="py-3 px-5 hidden md:table-cell">{{ $appointment->professional?->name }}</td>
+                                            <td class="py-3 px-5 hidden md:table-cell">{{ $appointment->service?->name }}</td>
                                             <td class="py-3 px-5"><x-badge :status="$appointment->status" /></td>
                                             <td class="py-3 px-5">
                                                 <div class="flex flex-wrap gap-2">

@@ -73,8 +73,8 @@
                                     <thead>
                                         <tr class="text-left text-gray-500 text-xs uppercase tracking-wide">
                                             <th class="py-3 px-4">Fecha</th>
-                                            <th class="py-3 px-4">Profesional</th>
-                                            <th class="py-3 px-4">Servicio</th>
+                                            <th class="py-3 px-4 hidden md:table-cell">Profesional</th>
+                                            <th class="py-3 px-4 hidden md:table-cell">Servicio</th>
                                             <th class="py-3 px-4">Cliente</th>
                                             <th class="py-3 px-4">Estado</th>
                                         </tr>
@@ -83,8 +83,8 @@
                                         @foreach ($citas as $cita)
                                             <tr>
                                                 <td class="py-3 px-4">{{ $cita->starts_at }}</td>
-                                                <td class="py-3 px-4">{{ $cita->professional_name }}</td>
-                                                <td class="py-3 px-4">{{ $cita->service_name }}</td>
+                                                <td class="py-3 px-4 hidden md:table-cell">{{ $cita->professional_name }}</td>
+                                                <td class="py-3 px-4 hidden md:table-cell">{{ $cita->service_name }}</td>
                                                 <td class="py-3 px-4">{{ $cita->customer_name }}</td>
                                                 <td class="py-3 px-4"><x-badge :status="$cita->status" /></td>
                                             </tr>
