@@ -13,16 +13,16 @@ class BusinessController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
+        $business = $this->contextoNegocio($request);
 
-        $business = $user->isSuperAdmin()
-            ? Business::find((int) $request->query('business_id', $user->business_id))
-            : $user->business;
-
-        abort_unless($business !== null && $user->can('view', $business), 403);
+        if ($business !== null) {
+            abort_unless($user->can('view', $business), 403);
+        }
 
         return view('settings.index', [
             'negocio' => $business,
-            'puedeGestionar' => $user->can('manage', $business),
+            'puedeGestionar' => $business !== null && $user->can('manage', $business),
+            'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }
 

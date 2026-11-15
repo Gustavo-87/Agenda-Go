@@ -53,18 +53,27 @@ class ProfessionalController extends Controller
      */
     public function pantalla(Request $request)
     {
-        $business = $this->negocioGestionable($request);
-        $professionalIds = $business->professionals()->pluck('id');
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isSuperAdmin(), 403);
+
+        $business = $this->contextoNegocio($request);
+
+        if ($business !== null) {
+            abort_unless($user->can('manage', $business), 403);
+        }
+
+        $professionalIds = $business?->professionals()->pluck('id') ?? collect();
 
         return view('gestion.index', [
             'negocio' => $business,
-            'profesionales' => $business->professionals()->orderBy('name')->get(),
-            'servicios' => $business->services()->orderBy('name')->get(),
+            'profesionales' => $business?->professionals()->orderBy('name')->get() ?? collect(),
+            'servicios' => $business?->services()->orderBy('name')->get() ?? collect(),
             'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)
                 ->get()->groupBy('professional_id'),
             'excepciones' => ScheduleException::whereIn('professional_id', $professionalIds)
                 ->orderBy('starts_on')->get()->groupBy('professional_id'),
-            'festivos' => $business->holidays()->orderBy('date')->get(),
+            'festivos' => $business?->holidays()->orderBy('date')->get() ?? collect(),
+            'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }
 

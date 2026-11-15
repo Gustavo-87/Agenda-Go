@@ -14,16 +14,16 @@ class CustomerController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
+        $business = $this->contextoNegocio($request);
 
-        $business = $user->isSuperAdmin()
-            ? Business::find((int) $request->query('business_id', $user->business_id))
-            : $user->business;
-
-        abort_unless($business !== null && $user->can('view', $business), 403);
+        if ($business !== null) {
+            abort_unless($user->can('view', $business), 403);
+        }
 
         return view('customers.index', [
             'negocio' => $business,
-            'clientes' => $business->customers()->orderBy('name')->get(),
+            'clientes' => $business?->customers()->orderBy('name')->paginate(10) ?? collect(),
+            'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }
 

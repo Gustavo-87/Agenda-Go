@@ -1,28 +1,29 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Ficha de cliente
-        </h2>
+        <h2 class="text-2xl font-extrabold">Ficha de cliente</h2>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-            <div class="bg-white shadow-sm sm:rounded-lg">
+            <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6 flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800">{{ $cliente->name }}</h3>
-                        <p class="text-sm text-gray-500 mt-1">Teléfono: {{ $cliente->phone }}</p>
-                        <p class="text-sm text-gray-500">
-                            Ausencias registradas:
-                            <span class="font-medium {{ $cliente->absences >= 2 ? 'text-red-600' : 'text-gray-800' }}">{{ $cliente->absences }}</span>
-                        </p>
-                        <p class="text-sm text-gray-500">
-                            Tratamiento de datos:
-                            <span class="font-medium {{ $cliente->data_consent ? 'text-emerald-600' : 'text-amber-600' }}">
-                                {{ $cliente->data_consent ? 'autorizado '.($cliente->data_consent_at?->format('Y-m-d') ?? '') : 'pendiente de autorización' }}
-                            </span>
-                        </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-turquoise-100 text-turquoise-700 flex items-center justify-center text-xl font-extrabold">
+                            {{ strtoupper(substr($cliente->name, 0, 1)) }}
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">{{ $cliente->name }}</h3>
+                            <p class="text-sm text-gray-500">Teléfono: {{ $cliente->phone }}</p>
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $cliente->absences >= 2 ? 'bg-red-100 text-red-700' : 'bg-warm-100 text-gray-600' }}">
+                                    {{ $cliente->absences }} ausencias
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $cliente->data_consent ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                    Datos: {{ $cliente->data_consent ? 'autorizados '.($cliente->data_consent_at?->format('Y-m-d') ?? '') : 'pendientes' }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     <form method="POST" action="{{ route('customers.consent', $cliente) }}">
@@ -35,35 +36,30 @@
                 </div>
             </div>
 
-            <div class="bg-white shadow-sm sm:rounded-lg">
+            <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Historial de citas</h3>
+                    <h3 class="text-lg font-bold mb-4">Historial de citas</h3>
 
                     @if ($historial->isEmpty())
-                        <p class="text-sm text-gray-500">Sin citas registradas.</p>
+                        <x-empty-state icon="calendar" title="Sin citas registradas" message="El historial se llenará con cada reserva atendida." />
                     @else
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <table class="min-w-full divide-y divide-warm-100 text-sm">
                                 <thead>
-                                    <tr class="text-left text-gray-500">
-                                        <th class="py-2 pr-4">Fecha</th>
-                                        <th class="py-2 pr-4">Profesional</th>
-                                        <th class="py-2 pr-4">Servicio</th>
-                                        <th class="py-2 pr-4">Estado</th>
+                                    <tr class="text-left text-gray-500 text-xs uppercase tracking-wide">
+                                        <th class="py-3 px-4">Fecha</th>
+                                        <th class="py-3 px-4">Profesional</th>
+                                        <th class="py-3 px-4">Servicio</th>
+                                        <th class="py-3 px-4">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100">
+                                <tbody class="divide-y divide-warm-100">
                                     @foreach ($historial as $cita)
                                         <tr>
-                                            <td class="py-2 pr-4">{{ $cita->starts_at }}</td>
-                                            <td class="py-2 pr-4">{{ $cita->professional?->name }}</td>
-                                            <td class="py-2 pr-4">{{ $cita->service?->name }}</td>
-                                            <td class="py-2 pr-4">
-                                                <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                                                    {{ ['confirmed' => 'bg-emerald-100 text-emerald-800', 'completed' => 'bg-teal-100 text-teal-800', 'cancelled' => 'bg-gray-100 text-gray-600', 'absent' => 'bg-red-100 text-red-800', 'pending' => 'bg-amber-100 text-amber-800', 'expired' => 'bg-gray-100 text-gray-500'][$cita->status] ?? 'bg-gray-100 text-gray-600' }}">
-                                                    {{ $cita->status }}
-                                                </span>
-                                            </td>
+                                            <td class="py-3 px-4">{{ $cita->starts_at }}</td>
+                                            <td class="py-3 px-4">{{ $cita->professional?->name }}</td>
+                                            <td class="py-3 px-4">{{ $cita->service?->name }}</td>
+                                            <td class="py-3 px-4"><x-badge :status="$cita->status" /></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -73,8 +69,8 @@
                 </div>
             </div>
 
-            <a href="{{ route('clientes.index') }}" class="inline-block text-sm text-teal-700 font-medium hover:underline">
-                ← Volver a clientes
+            <a href="{{ route('clientes.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-turquoise-700 hover:underline">
+                <x-icon name="arrow-left" class="w-4 h-4" /> Volver a clientes
             </a>
         </div>
     </div>

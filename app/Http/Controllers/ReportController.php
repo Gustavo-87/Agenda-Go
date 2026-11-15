@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Appointment;
 use App\Models\Business;
 use App\Models\MembershipPayment;
 use App\Models\ServicePayment;
 use Dompdf\Dompdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -36,12 +37,13 @@ class ReportController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isSuperAdmin(), 403);
 
-        $business = $user->isSuperAdmin()
-            ? Business::find((int) $request->query('business_id', $user->business_id))
-            : $user->business;
+        $business = $this->contextoNegocio($request);
 
-        abort_unless($business !== null && $user->can('manage', $business), 403);
+        if ($business !== null) {
+            abort_unless($user->can('manage', $business), 403);
+        }
 
         $desde = (string) $request->query('from', now()->subDays(30)->toDateString());
         $hasta = (string) $request->query('to', now()->toDateString());
@@ -51,10 +53,11 @@ class ReportController extends Controller
             'negocio' => $business,
             'desde' => $desde,
             'hasta' => $hasta,
-            'resumen' => $this->resumen($business, $desde, $hasta),
-            'citas' => $this->citas($request, $business),
-            'pagos' => ServicePayment::where('business_id', $business->id)
+            'resumen' => $business === null ? null : $this->resumen($business, $desde, $hasta),
+            'citas' => $business === null ? collect() : $this->citas($request, $business)->paginate(15)->withQueryString(),
+            'pagos' => $business === null ? collect() : ServicePayment::where('business_id', $business->id)
                 ->orderByDesc('paid_on')->limit(20)->get(),
+            'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -88,7 +91,7 @@ class ReportController extends Controller
     {
         abort_unless($request->user()->can('manage', $business), 403);
 
-        $citas = $this->citas($request, $business);
+        $citas = $this->citas($request, $business)->get();
 
         $lineas = ['fecha,profesional,servicio,cliente,telefono,estado'];
 
@@ -116,7 +119,7 @@ class ReportController extends Controller
     {
         abort_unless($request->user()->can('manage', $business), 403);
 
-        $citas = $this->citas($request, $business);
+        $citas = $this->citas($request, $business)->get();
 
         $hoja = new Spreadsheet;
         $activa = $hoja->getActiveSheet();
@@ -154,7 +157,7 @@ class ReportController extends Controller
         abort_unless($request->user()->can('manage', $business), 403);
 
         $rango = $this->rango($request);
-        $citas = $this->citas($request, $business);
+        $citas = $this->citas($request, $business)->get();
 
         $html = view('reports.appointments-pdf', [
             'business' => $business,
@@ -177,7 +180,7 @@ class ReportController extends Controller
      * Citas del negocio en el rango solicitado, con nombres de
      * profesional y servicio.
      *
-     * @return Collection<int, object>
+     * @return Builder<int, Appointment>
      */
     private function citas(Request $request, Business $business)
     {
@@ -195,8 +198,7 @@ class ReportController extends Controller
                 'professionals.name as professional_name',
                 'services.name as service_name'
             )
-            ->orderBy('appointments.starts_at')
-            ->get();
+            ->orderBy('appointments.starts_at');
     }
 
     /**
