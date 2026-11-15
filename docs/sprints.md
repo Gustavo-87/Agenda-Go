@@ -108,6 +108,14 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Respuestas duales: los formularios web redirigen con mensajes flash y las APIs JSON conservan su contrato (pruebas existentes intactas).
 - Navegación superior responsive sin menú lateral, con opciones según rol.
 
+### Rediseño visual (identidad AgendaGo)
+
+- Sistema visual propio: azul petróleo `#0B3540`, turquesa `#147B86`, blanco cálido y grises suaves; tipografía Plus Jakarta Sans; componentes reutilizables (`x-stat`, `x-badge`, `x-empty-state`, `x-icon`, `x-business-selector`).
+- Agenda con vistas de día y semana, filtro por profesional (administración), estados con badges y acciones sobre reservas.
+- Estados vacíos, confirmaciones y mensajes de error consistentes en todas las pantallas.
+- Edición completa de servicios desde la UI y paginación de clientes y reportes.
+- Corrección de accesos: usuarios sin negocio ven estados amigables (sin 403) en Clientes y Configuración, y el superadministrador puede seleccionar el negocio en contexto; se resuelve también el negocio vinculado mediante el profesional. Sin debilitar la autorización existente (aislamiento por negocio intacto).
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
