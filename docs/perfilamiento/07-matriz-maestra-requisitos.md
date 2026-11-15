@@ -32,7 +32,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-MEM-01 → RF-MEM-001 | Un plan mensual único con todas las funcionalidades contratadas. | 02 §2 | Implementado | `create_memberships_table`; `MembershipAdministrationTest` | — |
 | RN-002 | Máximo 5 profesionales activos por negocio; crear/reactivar respeta el límite. | 04 | Implementado | `ProfessionalController::assertLimiteProfesionalesActivos`; `ProfessionalManagementTest` | — |
 | Dec-06 | El superadministrador gestiona la plataforma, nunca las agendas de sus clientes. | 01, 04 RN-013 | Implementado | `BusinessPolicy` (sin bypass), guardas en Agenda/Clientes, `SaaSAdministrationTest` | — |
-| Dec-07 | El administrador gestiona profesionales, catálogo, precios, horarios, reservas, clientes y reportes; el profesional controla sus citas autorizadas. | 01, 04 RN-014/015 | Parcial | Gestión/Agenda/Clientes/Reportes + `ProfessionalManagementTest` | El profesional aún no configura su propia disponibilidad (ver D3) |
+| Dec-07 | El administrador gestiona profesionales, catálogo, precios, horarios, reservas, clientes y reportes; el profesional controla su disponibilidad y citas autorizadas. | 01, 04 RN-014/015 | Implementado | Gestión/Agenda/Clientes/Reportes; "Mi disponibilidad" en Configuración; `ScheduleConfigurationTest`, `ProfessionalManagementTest` | — |
 
 ### B2. Membresías
 
@@ -42,7 +42,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-MEM-03 → RF-MEM-003 | Renovación manual o cobro automático previamente autorizado. | 02 §2, 04 RN-008 | Parcial | `AdminController::renew`; `MembershipAdministrationTest` | Cobro automático condicionado a proveedor de pagos **no aprobado** |
 | RF-MEM-004 | 5 días de gracia tras el vencimiento y luego suspensión de nuevas reservas, conservando datos. | 02 §2, 04 RN-005/006/007 | Implementado | `Business::puedeReservar()`; `MembershipAdministrationTest` | — |
 | RF-MEM-005 | Aviso por WhatsApp 5 días antes del vencimiento, salvo renovación confirmada. | 02 §2, 04 RN-010 | Implementado | `NotifyExpiringMemberships` (con salto de renovadas); prueba del comando | Envío real pendiente de verificación Meta |
-| RF-MEM-006 | Cancelación sin permanencia mínima; el servicio se conserva hasta finalizar el período pagado. | 02 §2, 04 | Parcial | Suspensión y no eliminación de datos verificadas | Falta flujo explícito de "cancelación de membresía" (ver D4) |
+| RF-MEM-006 | Cancelación sin permanencia mínima; el servicio se conserva hasta finalizar el período pagado. | 02 §2, 04 | Implementado | `AdminController::cancelMembership`; `Business::puedeReservar` (cancelada conserva servicio); `MembershipAdministrationTest` | — |
 | Dec-15 | Retención de datos 90 días tras la cancelación, salvo obligación legal; exportación bajo solicitud al superadministrador. | 01 | Pendiente | — | Definir proceso de retención/exportación |
 
 ### B3. Mensajería incluida
@@ -59,7 +59,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-RES-001 | El cliente reserva por WhatsApp como canal principal. | 02 §5, 01 | Implementado (integración) | `ReservaWhatsAppService`, `FlujoReservasService`, `WhatsAppMultiempresaTest` | Verificación real con Meta **condicionada** |
 | RF-RES-002 | Confirmación automática o manual, configurable por negocio. | 02 §5, 04 RN-021 | Implementado | `businesses.booking_auto_confirm`; `BookingEngineTest` | — |
 | RN-018 | Disponibilidad sin solapamientos: duración, jornadas, descansos, festivos, bloqueos y excepciones. | 04 RN-019 | Implementado | `DisponibilidadService`; `BookingEngineTest`, `ScheduleConfigurationTest` | — |
-| RF-RES-003 | Las solicitudes pendientes vencen a las 2 horas o antes del inicio de la cita. | 02 §5, 04 RN-022 | **Parcial — contradicción (D1)** | `appointments:expire` + `booking_pending_ttl_minutes` (defecto 30) | Ajustar regla/configuración al criterio aprobado de 2 horas |
+| RF-RES-003 | Las solicitudes pendientes vencen a las 2 horas o antes del inicio de la cita. | 02 §5, 04 RN-022 | Implementado | `AppointmentController` (`min(TTL, inicio)` en hora local), `ExpirePendingAppointments`; `BookingEngineTest` | — |
 | RF-RES-005 | Reprogramaciones exclusivamente por usuarios autorizados del negocio. | 02 §5, 04 RN-025 | Implementado | `AppointmentController::reschedule` + `BusinessIsolationTest` | — |
 | RF-RES-004 | Cancelaciones según política configurable del negocio. | 02 §5 | Parcial | Cancelación operativa implementada | Falta política configurable (motivos, plazos) |
 | RF-RES-007 | Alertas por antecedentes de ausencia, sin bloqueo automático. | 02 §5, 04 RN-027 | Implementado | Umbral 2 ausencias + aviso; `CustomerCommunicationsTest` | — |
@@ -124,11 +124,11 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 
 ## D. Contradicciones, omisiones y requisitos sin pruebas
 
-- **D1 (contradicción):** RF-RES-003 fija el vencimiento de solicitudes pendientes a las 2 horas o antes del inicio; la implementación usa `booking_pending_ttl_minutes` (defecto 30) sin corte por inicio. Requiere decisión de ajuste (configuración por defecto y/o regla `min(TTL, inicio)`).
+- **D1 (resuelta):** RF-RES-003 aplicado: el vencimiento es `min(TTL, inicio)` con TTL máximo de 2 horas (migración de límite y validación `max:120`). Corregido también el defecto de zona horaria del motor de disponibilidad (franjas y vencimientos en hora local `America/Bogota`).
 - **D2 (nomenclatura):** la entrevista usa RF-MEM-01..03 y RF-MEN-01; el documento aprobado usa RF-MEM-001..006. Se conservan ambos con la tabla de alias (sección A); no se duplican requisitos.
-- **D3 (omisión):** RN-015 indica que cada profesional administra su propia agenda; hoy la disponibilidad (jornadas/excepciones) la configura el administrador y el profesional solo edita sus datos de contacto.
-- **D4 (omisión):** RF-MEM-006 no tiene flujo explícito de cancelación de membresía (hoy existe suspensión y no eliminación de datos).
-- **D5 (sin pruebas aún):** consentimiento comercial, retención de 90 días, panel de consumo de mensajería, precarga de festivos y confirmación de asistencia por respuesta del cliente.
+- **D3 (resuelta):** cada profesional gestiona su disponibilidad y bloqueos desde Configuración ("Mi disponibilidad"), con los mismos permisos y aislamiento del negocio.
+- **D4 (resuelta):** flujo explícito de cancelación de membresía sin permanencia; el servicio se conserva hasta el fin del período pagado.
+- **D5 (sin pruebas aún / pendientes):** consentimiento comercial, retención de 90 días, panel de consumo de mensajería, precarga de festivos y confirmación de asistencia por respuesta del cliente.
 
 ## E. Referencias cruzadas
 
