@@ -7,7 +7,7 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-            @if ($negocio === null)
+            @if ($negocio === null && ! auth()->user()->isSuperAdmin())
                 <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                     @if (auth()->user()->isSuperAdmin())
                         <div class="p-6">
@@ -19,6 +19,36 @@
                         <x-empty-state icon="cog" title="No tienes un negocio asignado"
                             message="La configuración del negocio estará disponible cuando tu cuenta sea vinculada. Mientras tanto, gestiona la seguridad de tu cuenta abajo." />
                     @endif
+                </div>
+            @endif
+
+            @if ($miProfesional ?? null)
+                <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="w-10 h-10 rounded-xl bg-turquoise-100 text-turquoise-700 flex items-center justify-center"><x-icon name="users" /></div>
+                            <div>
+                                <h3 class="text-lg font-bold">Mis datos de contacto</h3>
+                                <p class="text-sm text-gray-500">Así te verán los clientes en la agenda.</p>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ route('professionals.contact', $miProfesional) }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                            @csrf
+                            @method('PATCH')
+                            <div>
+                                <x-input-label value="Nombre" />
+                                <x-text-input name="name" :value="$miProfesional->name" class="w-full mt-1" required />
+                            </div>
+                            <div>
+                                <x-input-label value="Teléfono" />
+                                <x-text-input name="phone" :value="$miProfesional->phone" class="w-full mt-1" />
+                            </div>
+                            <div class="flex items-end">
+                                <x-primary-button>Guardar</x-primary-button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             @endif
 

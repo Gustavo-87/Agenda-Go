@@ -134,6 +134,29 @@ class ProfessionalController extends Controller
     }
 
     /**
+     * Datos de contacto de la profesional: los edita ella misma o
+     * la administración de su negocio.
+     */
+    public function updateContact(Request $request, Professional $professional)
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $professional->user_id === $user->id || $user->can('manage', $professional),
+            403
+        );
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $professional->update($data);
+
+        return $this->respuesta($request, 'Datos de contacto actualizados');
+    }
+
+    /**
      * Business the authenticated user manages: their own, or any
      * business when the user is a super admin and selects it.
      */

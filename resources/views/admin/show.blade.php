@@ -66,19 +66,18 @@
 
             <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
-                    <h3 class="text-lg font-bold mb-1">Usuarios y administradores</h3>
-                    <p class="text-sm text-gray-500 mb-4">Asigna de forma segura los usuarios de este negocio y sus roles.</p>
+                    <h3 class="text-lg font-bold mb-1">Invitar usuarios</h3>
+                    <p class="text-sm text-gray-500 mb-4">Recibirán un correo con un enlace temporal para crear su contraseña.</p>
 
-                    <form method="POST" action="{{ route('admin.users.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6">
+                    <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
                         @csrf
-                        <x-text-input name="name" placeholder="Nombre" class="w-full" required />
-                        <x-text-input name="email" type="email" placeholder="Correo" class="w-full" required />
-                        <x-text-input name="password" type="password" placeholder="Contraseña (mín. 8)" class="w-full" required />
+                        <x-text-input name="email" type="email" placeholder="Correo electrónico" class="w-full" required />
                         <select name="role" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
                             <option value="admin">Administrador</option>
                             <option value="professional">Profesional</option>
                         </select>
-                        <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Crear usuario</x-primary-button>
+                        <div></div>
+                        <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Enviar invitación</x-primary-button>
                     </form>
 
                     @if ($usuarios->isEmpty())

@@ -38,12 +38,21 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Profesionales</h3>
 
-                        <form method="POST" action="{{ route('professionals.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                        <form method="POST" action="{{ route('professionals.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
                             @csrf
                             <x-text-input name="name" placeholder="Nombre" class="w-full" required />
                             <x-text-input name="phone" placeholder="Teléfono (opcional)" class="w-full" />
                             <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Agregar</x-primary-button>
                             <div class="text-xs text-gray-500 self-center">Máximo 5 profesionales activos por negocio.</div>
+                        </form>
+
+                        <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 border-t border-warm-100 pt-4">
+                            @csrf
+                            <input type="hidden" name="role" value="professional">
+                            <x-text-input name="email" type="email" placeholder="Invitar profesional por correo…" class="w-full" required />
+                            <div class="text-xs text-gray-500 self-center">Recibirá un enlace temporal para crear su contraseña.</div>
+                            <div></div>
+                            <x-primary-button class="justify-center">Enviar invitación</x-primary-button>
                         </form>
 
                         @if ($profesionales->isEmpty())
