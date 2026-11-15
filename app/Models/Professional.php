@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'phone', 'active', 'business_id'])]
+#[Fillable(['name', 'phone', 'active', 'business_id', 'user_id'])]
 class Professional extends Model
 {
     protected function casts(): array

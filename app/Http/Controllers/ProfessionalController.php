@@ -54,7 +54,7 @@ class ProfessionalController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->isAdmin() || $user->isSuperAdmin(), 403);
+        abort_unless($user->isAdmin(), 403);
 
         $business = $this->contextoNegocio($request);
 
@@ -67,6 +67,7 @@ class ProfessionalController extends Controller
         return view('gestion.index', [
             'negocio' => $business,
             'profesionales' => $business?->professionals()->orderBy('name')->get() ?? collect(),
+            'usuarios' => $business?->users()->orderBy('name')->get() ?? collect(),
             'servicios' => $business?->services()->orderBy('name')->get() ?? collect(),
             'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)
                 ->get()->groupBy('professional_id'),
@@ -104,6 +105,32 @@ class ProfessionalController extends Controller
         $mensaje = $professional->active ? 'Profesional activado' : 'Profesional desactivado';
 
         return $this->respuesta($request, $mensaje, ['active' => $professional->active]);
+    }
+
+    /**
+     * Vincula el usuario que accederá a la agenda de la profesional.
+     */
+    public function assignUser(Request $request, Professional $professional)
+    {
+        $this->assertPuedeGestionar($request->user(), $professional);
+
+        $data = $request->validate(['user_id' => ['nullable', 'integer', 'exists:users,id']]);
+
+        $userId = $data['user_id'] ?: null;
+
+        if ($userId !== null) {
+            $user = User::find($userId);
+
+            if ($user === null || $user->business_id !== $professional->business_id) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'El usuario no pertenece a este negocio.',
+                ]);
+            }
+        }
+
+        $professional->update(['user_id' => $userId]);
+
+        return $this->respuesta($request, 'Usuario vinculado a la profesional');
     }
 
     /**

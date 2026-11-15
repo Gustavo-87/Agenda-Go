@@ -85,6 +85,17 @@
                                                                 {{ $profesional->active ? 'Desactivar' : 'Activar' }}
                                                             </x-secondary-button>
                                                         </form>
+                                                        <form method="POST" action="{{ route('professionals.assign-user', $profesional) }}" class="flex items-center gap-2">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <select name="user_id" class="border-warm-300 rounded-xl text-xs focus:border-turquoise-500 focus:ring-turquoise-500">
+                                                                <option value="">Sin usuario</option>
+                                                                @foreach ($usuarios as $usuario)
+                                                                    <option value="{{ $usuario->id }}" @selected($profesional->user_id == $usuario->id)>{{ $usuario->email }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <x-secondary-button type="submit">Vincular usuario</x-secondary-button>
+                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>

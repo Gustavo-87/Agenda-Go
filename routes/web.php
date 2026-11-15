@@ -131,6 +131,13 @@ Route::middleware(['auth', 'twofa'])->group(function () {
     Route::get('/reportes', [ReportController::class, 'pantalla'])->name('reportes.index');
     Route::get('/configuracion', [BusinessController::class, 'pantalla'])->name('configuracion.index');
     Route::get('/admin', [AdminController::class, 'pantalla'])->name('admin.pantalla');
+    Route::get('/admin/businesses/{business}', [AdminController::class, 'showBusiness'])->name('admin.businesses.show');
+    Route::patch('/admin/businesses/{business}', [AdminController::class, 'updateBusiness'])->name('admin.businesses.update');
+    Route::get('/admin/memberships', [AdminController::class, 'pantallaMembresias'])->name('admin.memberships');
+    Route::post('/admin/businesses/{business}/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
+    Route::patch('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}/assignment', [AdminController::class, 'detachUser'])->name('admin.users.detach');
+    Route::patch('/professionals/{professional}/user', [ProfessionalController::class, 'assignUser'])->name('professionals.assign-user');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');

@@ -91,6 +91,14 @@ class Business extends Model
     }
 
     /**
+     * @return HasMany<User, $this>
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    /**
      * RN-003 / RN-005 / RN-006: el negocio acepta reservas si está
      * activo y su membresía vigente no está suspendida, con cinco
      * días de gracia tras el vencimiento. Un negocio sin membresías
