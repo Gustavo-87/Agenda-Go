@@ -38,7 +38,7 @@ abstract class Controller
             return $id > 0 ? Business::find($id) : null;
         }
 
-        return $user->business ?? Business::find(
+        return Business::find($user->business_id) ?? Business::find(
             Professional::where('user_id', $user->id)->value('business_id')
         );
     }

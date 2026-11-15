@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name', 'slug', 'sector', 'email', 'phone', 'active',
     'booking_min_notice_minutes', 'booking_max_advance_days',
     'booking_auto_confirm', 'booking_pending_ttl_minutes',
-    'whatsapp_phone_number_id',
+    'whatsapp_phone_number_id', 'messaging_included', 'messaging_overage_authorized',
 ])]
 class Business extends Model
 {

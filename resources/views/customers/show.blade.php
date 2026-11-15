@@ -22,6 +22,9 @@
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $cliente->data_consent ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                     Datos: {{ $cliente->data_consent ? 'autorizados '.($cliente->data_consent_at?->format('Y-m-d') ?? '') : 'pendientes' }}
                                 </span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $cliente->commercial_consent ? 'bg-turquoise-100 text-turquoise-700' : 'bg-gray-200 text-gray-600' }}">
+                                    Comercial: {{ $cliente->commercial_consent ? 'autorizado '.($cliente->commercial_consent_at?->format('Y-m-d') ?? '') : 'no autorizado' }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -32,6 +35,14 @@
                         <x-primary-button>
                             {{ $cliente->data_consent ? 'Revocar autorización' : 'Registrar autorización' }}
                         </x-primary-button>
+                    </form>
+
+                    <form method="POST" action="{{ route('customers.commercial-consent', $cliente) }}">
+                        @csrf
+                        <input type="hidden" name="commercial_consent" value="{{ $cliente->commercial_consent ? 0 : 1 }}">
+                        <x-secondary-button>
+                            {{ $cliente->commercial_consent ? 'Revocar consentimiento comercial' : 'Autorizar comunicaciones comerciales' }}
+                        </x-secondary-button>
                     </form>
                 </div>
             </div>

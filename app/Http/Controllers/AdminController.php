@@ -303,6 +303,29 @@ class AdminController extends Controller
         );
     }
 
+    /**
+     * RF-MEN-001: cuota de mensajería por autorización expresa del
+     * superadministrador (sin valores comerciales inventados).
+     */
+    public function updateMessaging(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $data = $request->validate([
+            'messaging_included' => ['nullable', 'integer', 'min:0'],
+            'messaging_overage_authorized' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $business->update([
+            'messaging_included' => $data['messaging_included'] ?? null,
+            'messaging_overage_authorized' => $data['messaging_overage_authorized'] ?? null,
+        ]);
+
+        AuditLog::registrar($request->user(), 'mensajeria.cuota.autorizada', $business, $data);
+
+        return $this->respuesta($request, 'Cuota de mensajería actualizada');
+    }
+
     private function assertSuperAdmin(Request $request): void
     {
         abort_unless($request->user()?->isSuperAdmin(), 403);

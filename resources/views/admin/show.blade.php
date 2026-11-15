@@ -69,6 +69,31 @@
 
             <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
+                    <h3 class="text-lg font-bold mb-1">Cuota de mensajería</h3>
+                    <p class="text-sm text-gray-500 mb-4">La membresía incluye mensajería; los excedentes requieren autorización expresa (RF-MEN-001). Dejar vacío significa «sin definir».</p>
+
+                    <form method="POST" action="{{ route('admin.businesses.messaging', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        @csrf
+                        @method('PATCH')
+                        <div>
+                            <x-input-label value="Mensajes incluidos" />
+                            <x-text-input name="messaging_included" type="number" min="0" :value="$negocio->messaging_included" class="w-full mt-1" />
+                            <p class="text-xs text-gray-500 mt-1">Cuota incluida en el plan mensual.</p>
+                        </div>
+                        <div>
+                            <x-input-label value="Excedentes autorizados" />
+                            <x-text-input name="messaging_overage_authorized" type="number" min="0" :value="$negocio->messaging_overage_authorized" class="w-full mt-1" />
+                            <p class="text-xs text-gray-500 mt-1">Autorización expresa de consumo adicional.</p>
+                        </div>
+                        <div class="flex items-end">
+                            <x-primary-button>Guardar autorización</x-primary-button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
+                <div class="p-6">
                     <h3 class="text-lg font-bold mb-1">Invitar usuarios</h3>
                     <p class="text-sm text-gray-500 mb-4">Recibirán un correo con un enlace temporal para crear su contraseña. Los campos con <span class="text-red-600 font-semibold">*</span> son obligatorios.</p>
 

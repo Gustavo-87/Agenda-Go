@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Business;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -82,5 +83,34 @@ class CustomerController extends Controller
         ]);
 
         return $this->respuesta($request, 'Consentimiento registrado');
+    }
+
+    /**
+     * Consentimiento comercial independiente del tratamiento de datos
+     * necesario para reservar (Dec-12), con evidencia y revocación.
+     */
+    public function commercialConsent(Request $request, Customer $customer)
+    {
+        abort_unless($customer->business !== null && $request->user()->can('manage', $customer->business), 403);
+
+        $data = $request->validate(['commercial_consent' => ['required', 'boolean']]);
+
+        $consentido = (bool) $data['commercial_consent'];
+
+        $customer->update([
+            'commercial_consent' => $consentido,
+            'commercial_consent_at' => $consentido ? now() : $customer->commercial_consent_at,
+        ]);
+
+        AuditLog::registrar(
+            $request->user(),
+            $consentido ? 'consentimiento.comercial.otorgado' : 'consentimiento.comercial.revocado',
+            $customer
+        );
+
+        return $this->respuesta(
+            $request,
+            $consentido ? 'Consentimiento comercial registrado' : 'Consentimiento comercial revocado'
+        );
     }
 }

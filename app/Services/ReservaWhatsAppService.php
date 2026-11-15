@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
+use App\Models\Appointment;
 use App\Models\Business;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,14 @@ class ReservaWhatsAppService
         $clave = 'reserva_whatsapp_'.$businessId.'_'.hash('sha256', $telefono);
         $estado = Cache::get($clave);
         $mensaje = trim($mensaje);
+
+        if (! $estado) {
+            $respuestaCita = $this->gestionarRespuestaCita($telefono, $mensaje, $businessId);
+
+            if ($respuestaCita !== null) {
+                return $respuestaCita;
+            }
+        }
 
         if (! $estado || in_array(mb_strtolower($mensaje), ['hola', 'menu', 'menú', 'reiniciar', 'cancelar'])) {
             $estado = ['paso' => 'profesional'];
@@ -147,6 +156,48 @@ class ReservaWhatsAppService
         Cache::put($clave, $estado, now()->addHours(2));
 
         return $respuesta;
+    }
+
+    /**
+     * Confirmación de asistencia o cancelación por respuesta del
+     * cliente, respetando las políticas del negocio (solicitudes
+     * vigentes o citas confirmadas, antes del inicio).
+     */
+    private function gestionarRespuestaCita(string $telefono, string $mensaje, ?int $businessId): ?string
+    {
+        $palabra = mb_strtolower(trim($mensaje));
+
+        $confirmar = in_array($palabra, ['confirmar', 'confirmo', 'si', 'sí', 'asistire', 'asistiré'], true);
+        $cancelar = in_array($palabra, ['cancelar', 'cancelo', 'no'], true);
+
+        if (! $confirmar && ! $cancelar) {
+            return null;
+        }
+
+        $cita = Appointment::where('customer_phone', $telefono)
+            ->where('business_id', $businessId)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('starts_at', '>', now('America/Bogota'))
+            ->orderBy('starts_at')
+            ->first();
+
+        if ($cita === null) {
+            return 'No encontramos citas próximas para confirmar o cancelar.';
+        }
+
+        if ($confirmar) {
+            if ($cita->status !== 'pending') {
+                return 'Tu cita del '.$cita->starts_at.' ya está confirmada. ¡Te esperamos!';
+            }
+
+            $cita->update(['status' => 'confirmed', 'pending_expires_at' => null]);
+
+            return '¡Cita confirmada! Te esperamos el '.$cita->starts_at.'.';
+        }
+
+        $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
+
+        return 'Tu cita del '.$cita->starts_at.' fue cancelada.';
     }
 
     private function elegir($items, string $mensaje)

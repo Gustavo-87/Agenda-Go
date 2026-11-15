@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Business;
 use App\Models\Professional;
+use App\Models\WhatsAppMessage;
 use Illuminate\Http\Request;
 
 class BusinessController extends Controller
@@ -30,6 +31,10 @@ class BusinessController extends Controller
             'miProfesional' => $miProfesional,
             'misHorarios' => $miProfesional?->workSchedules()->orderBy('weekday')->orderBy('start_time')->get() ?? collect(),
             'misExcepciones' => $miProfesional?->scheduleExceptions()->orderBy('starts_on')->get() ?? collect(),
+            'consumoMensajeria' => $business === null
+                ? 0
+                : WhatsAppMessage::where('business_id', $business->id)
+                    ->where('direction', 'outbound')->count(),
         ]);
     }
 

@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['business_id', 'name', 'phone', 'email', 'data_consent', 'data_consent_at', 'absences'])]
+#[Fillable([
+    'business_id', 'name', 'phone', 'email', 'data_consent', 'data_consent_at',
+    'commercial_consent', 'commercial_consent_at', 'absences',
+])]
 class Customer extends Model
 {
     /**
@@ -36,6 +39,8 @@ class Customer extends Model
         return [
             'data_consent' => 'boolean',
             'data_consent_at' => 'datetime',
+            'commercial_consent' => 'boolean',
+            'commercial_consent_at' => 'datetime',
         ];
     }
 }

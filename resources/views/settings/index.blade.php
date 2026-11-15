@@ -200,7 +200,42 @@
             @if ($negocio !== null)
                 <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                     <div class="p-6">
-                        <h3 class="text-lg font-bold mb-4">Datos del negocio</h3>
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="w-10 h-10 rounded-xl bg-turquoise-100 text-turquoise-700 flex items-center justify-center"><x-icon name="bell" /></div>
+                            <div>
+                                <h3 class="text-lg font-bold">Consumo de mensajería</h3>
+                                <p class="text-sm text-gray-500">Mensajes incluidos en la membresía, utilizados, disponibles y excedentes autorizados por la plataforma.</p>
+                            </div>
+                        </div>
+
+                        <dl class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 text-sm">
+                            <div class="rounded-xl bg-warm-100 p-4">
+                                <dt class="text-gray-500">Incluido</dt>
+                                <dd class="text-2xl font-extrabold text-petrol mt-1">{{ $negocio->messaging_included ?? 'Por definir' }}</dd>
+                            </div>
+                            <div class="rounded-xl bg-warm-100 p-4">
+                                <dt class="text-gray-500">Utilizado</dt>
+                                <dd class="text-2xl font-extrabold text-petrol mt-1">{{ $consumoMensajeria }}</dd>
+                            </div>
+                            <div class="rounded-xl bg-warm-100 p-4">
+                                <dt class="text-gray-500">Disponible</dt>
+                                <dd class="text-2xl font-extrabold text-petrol mt-1">
+                                    {{ $negocio->messaging_included !== null ? max($negocio->messaging_included - $consumoMensajeria, 0) : '—' }}
+                                </dd>
+                            </div>
+                            <div class="rounded-xl bg-warm-100 p-4">
+                                <dt class="text-gray-500">Excedentes autorizados</dt>
+                                <dd class="text-2xl font-extrabold text-petrol mt-1">{{ $negocio->messaging_overage_authorized ?? '—' }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            @endif
+
+            @if ($negocio !== null)
+                <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold mb-1">Datos del negocio</h3>
                         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                             <div><dt class="text-gray-500">Nombre</dt><dd class="font-semibold text-petrol">{{ $negocio->name }}</dd></div>
                             <div><dt class="text-gray-500">Identificador</dt><dd class="font-semibold text-petrol">{{ $negocio->slug }}</dd></div>
