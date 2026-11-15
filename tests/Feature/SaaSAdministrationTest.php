@@ -8,9 +8,11 @@ use App\Models\Business;
 use App\Models\Professional;
 use App\Models\Service;
 use App\Models\User;
+use App\Notifications\InvitationNotification;
 use App\Notifications\TwoFactorCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SaaSAdministrationTest extends TestCase
@@ -284,6 +286,107 @@ class SaaSAdministrationTest extends TestCase
             'name' => 'Stefania Rojas',
             'phone' => '3100000000',
         ]);
+    }
+
+    public function test_end_to_end_invitation_flow_and_daily_business_management(): void
+    {
+        Notification::fake();
+        Queue::fake();
+
+        // 1. El superadministrador crea el negocio.
+        $super = $this->superAdmin();
+        $this->actingAs($super)->post('/admin/businesses', ['name' => 'Viglam', 'slug' => 'viglam'])
+            ->assertSessionHas('success');
+        $business = Business::where('slug', 'viglam')->firstOrFail();
+
+        $this->actingAs($super)
+            ->post("/admin/businesses/{$business->id}/activate")
+            ->assertSessionHas('success');
+
+        // 2-3. Asigna al administrador y le envía la invitación.
+        $this->actingAs($super)
+            ->postJson("/businesses/{$business->id}/invitations", ['email' => 'ana@viglam.test', 'role' => 'admin'])
+            ->assertStatus(201);
+
+        $token = null;
+        Notification::assertSentOnDemand(InvitationNotification::class, function ($notification) use (&$token) {
+            $token = $notification->token;
+
+            return true;
+        });
+
+        // 4. La administradora establece su contraseña.
+        $this->post('/logout');
+        $this->post('/invitations/accept', [
+            'token' => $token,
+            'name' => 'Ana',
+            'password' => 'password-secreta',
+            'password_confirmation' => 'password-secreta',
+        ])->assertRedirect(route('login'));
+
+        // 5. Inicia sesión con 2FA y accede a su panel.
+        $this->post('/login', ['email' => 'ana@viglam.test', 'password' => 'password-secreta'])
+            ->assertRedirect(route('2fa.show'));
+
+        $codigo = null;
+        Notification::assertSentTo(
+            User::where('email', 'ana@viglam.test')->first(),
+            TwoFactorCode::class,
+            function ($notification) use (&$codigo) {
+                $codigo = $notification->codigo;
+
+                return true;
+            }
+        );
+
+        $this->post('/2fa', ['code' => $codigo])->assertRedirect(route('dashboard', absolute: false));
+        $this->get('/dashboard')->assertOk()->assertSee('Panel del negocio');
+
+        // 6. Gestiona profesionales, servicios y horarios de su negocio.
+        $this->from('/gestion')->post('/professionals', ['name' => 'Stefania'])
+            ->assertSessionHas('success');
+
+        $professional = Professional::where('business_id', $business->id)->firstOrFail();
+
+        $this->post("/businesses/{$business->id}/services", [
+            'name' => 'Semipermanente',
+            'duration_minutes' => 60,
+            'price' => 50000,
+            'professional_id' => $professional->id,
+        ])->assertSessionHas('success');
+
+        $weekday = (int) now('America/Bogota')->addDays(3)->dayOfWeekIso - 1;
+
+        $this->post("/professionals/{$professional->id}/schedules", [
+            'weekday' => $weekday,
+            'start_time' => '09:00',
+            'end_time' => '18:00',
+        ])->assertSessionHas('success');
+
+        // 7. Reserva pública en su negocio (canal Viglam).
+        config(['services.reservas.business_slug' => 'viglam']);
+        $fecha = now('America/Bogota')->addDays(3)->toDateString();
+        $service = $professional->services()->firstOrFail();
+
+        $this->postJson('/api/appointments', [
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'customer_name' => 'Carla',
+            'customer_phone' => '3000000000',
+            'starts_at' => "{$fecha} 09:00:00",
+        ])->assertStatus(201);
+
+        // 8. Sin acceso a los recursos de otro negocio.
+        $otherBusiness = Business::factory()->create();
+        $otherProfessional = Professional::create(['name' => 'Laura', 'business_id' => $otherBusiness->id]);
+
+        $this->patchJson("/professionals/{$otherProfessional->id}", ['name' => 'Hack'])->assertStatus(403);
+        $this->postJson("/businesses/{$otherBusiness->id}/services", [
+            'name' => 'Intruso',
+            'duration_minutes' => 60,
+            'price' => 1,
+            'professional_id' => $otherProfessional->id,
+        ])->assertStatus(403);
     }
 
     public function test_the_profile_page_is_displayed_in_spanish(): void

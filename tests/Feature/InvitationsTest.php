@@ -128,6 +128,108 @@ class InvitationsTest extends TestCase
         $this->assertDatabaseHas('invitations', ['email' => 'pro@viglam.test', 'role' => 'professional']);
     }
 
+    public function test_invitations_can_be_resent_and_revoked(): void
+    {
+        Notification::fake();
+        $business = Business::factory()->create();
+        $super = $this->superAdmin();
+
+        $invitationId = $this->actingAs($super)
+            ->postJson("/businesses/{$business->id}/invitations", ['email' => 'pro@viglam.test', 'role' => 'professional'])
+            ->assertStatus(201)
+            ->json('invitation_id');
+
+        $tokens = [];
+        Notification::assertSentOnDemand(InvitationNotification::class, function ($notification) use (&$tokens) {
+            $tokens[] = $notification->token;
+
+            return true;
+        });
+
+        $this->actingAs($super)
+            ->postJson("/invitations/{$invitationId}/resend")
+            ->assertStatus(200);
+
+        Notification::assertSentOnDemandTimes(InvitationNotification::class, 2);
+        Notification::assertSentOnDemand(InvitationNotification::class, function ($notification) use (&$tokens) {
+            if (! in_array($notification->token, $tokens, true)) {
+                $tokens[] = $notification->token;
+            }
+
+            return true;
+        });
+
+        $this->post('/logout');
+
+        $this->get('/invitations/accept?token='.$tokens[0])->assertStatus(404);
+        $this->get('/invitations/accept?token='.$tokens[1])->assertOk();
+
+        $segunda = $this->actingAs($super)
+            ->postJson("/businesses/{$business->id}/invitations", ['email' => 'otra@viglam.test', 'role' => 'professional'])
+            ->json('invitation_id');
+
+        $this->actingAs($super)->deleteJson("/invitations/{$segunda}")->assertStatus(200);
+
+        $this->post('/logout');
+
+        $this->get('/invitations/accept?token='.Invitation::find($segunda)->token)->assertStatus(404);
+    }
+
+    public function test_invitation_management_is_authorized(): void
+    {
+        $business = Business::factory()->create();
+        $otherBusiness = Business::factory()->create();
+
+        $admin = User::factory()->create(['business_id' => $business->id, 'role' => UserRole::Admin]);
+        $foreign = User::factory()->create(['business_id' => $otherBusiness->id, 'role' => UserRole::Admin]);
+
+        $profesional = Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'professional',
+            'email' => 'pro@viglam.test',
+            'token' => hash('sha256', 'tok-1'),
+            'expires_at' => now()->addDay(),
+        ]);
+        $deAdmin = Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'admin',
+            'email' => 'jefe@viglam.test',
+            'token' => hash('sha256', 'tok-2'),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($foreign)->deleteJson("/invitations/{$profesional->id}")->assertStatus(403);
+        $this->actingAs($admin)->deleteJson("/invitations/{$deAdmin->id}")->assertStatus(403);
+        $this->actingAs($admin)->deleteJson("/invitations/{$profesional->id}")->assertStatus(200);
+
+        $this->assertNotNull($profesional->fresh()->accepted_at);
+        $this->assertNull($deAdmin->fresh()->accepted_at);
+    }
+
+    public function test_expired_invitations_cannot_be_accepted(): void
+    {
+        $business = Business::factory()->create();
+
+        Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'professional',
+            'email' => 'tardia@viglam.test',
+            'token' => hash('sha256', 'tok-vencido'),
+            'expires_at' => now()->addMinutes(5),
+        ]);
+
+        $this->travel(10)->minutes();
+
+        $this->post('/invitations/accept', [
+            'token' => 'tok-vencido',
+            'name' => 'Tardía',
+            'password' => 'password-secreta',
+            'password_confirmation' => 'password-secreta',
+        ])->assertStatus(404);
+
+        $this->assertDatabaseMissing('users', ['email' => 'tardia@viglam.test']);
+    }
+
     public function test_existing_users_cannot_be_invited_again(): void
     {
         $business = Business::factory()->create();
