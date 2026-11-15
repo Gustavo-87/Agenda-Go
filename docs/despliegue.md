@@ -15,6 +15,14 @@ Guía operativa para desplegar y mantener AgendaGo (Sprint 8).
 3. `php artisan migrate --force`.
 4. Variables sensibles (`DB_*`, `WHATSAPP_*`, credenciales de correo) solo en `.env` o gestor de secretos. Nunca en el repositorio.
 
+### Correo SMTP (invitaciones, OTP y recuperación de contraseñas)
+
+- Requerido: `MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT` (587 con `MAIL_ENCRYPTION=tls`), `MAIL_USERNAME`, `MAIL_PASSWORD` y `MAIL_FROM_ADDRESS` verificado con el proveedor.
+- `MAIL_MAILER=log` **solo registra en `storage/logs` y no entrega correos**; úsalo únicamente en desarrollo sin envío real.
+- Estados de envío registrados en `mail_deliveries`: `registered` (aceptado por la aplicación), `accepted` (aceptado por el proveedor SMTP) y `failed` (rechazo del transporte). La **entrega final al buzón** solo puede confirmarla el proveedor; la aplicación no la da por hecha.
+- Verificación controlada: `php artisan mail:test {correo}` (aceptación del proveedor sin exponer credenciales ni tokens) y `php artisan mail:failures` (fallos registrados).
+- Reintentos seguros: invitaciones con «Reenviar» (invalida el enlace anterior), OTP con un nuevo inicio de sesión y recuperación con una nueva solicitud.
+
 ## Colas y tareas programadas
 
 - Cola recomendada: `database` o `redis` (los reintentos de notificaciones usan `tries=3`).
