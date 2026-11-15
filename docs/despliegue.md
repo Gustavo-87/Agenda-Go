@@ -53,4 +53,5 @@ Guía operativa para desplegar y mantener AgendaGo (Sprint 8).
 
 - Registro de operaciones relevantes: tabla `audit_logs`.
 - Trazabilidad de comunicaciones: tabla `whatsapp_messages` (entrantes/salientes con estado).
+- Reportes exportables en CSV, Excel y PDF por negocio (`/businesses/{business}/reports/...`).
 - Ante incidentes: revisar `storage/logs`, `failed_jobs` y `audit_logs`; reproducir con datos sintéticos.

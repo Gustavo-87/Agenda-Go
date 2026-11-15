@@ -60,7 +60,7 @@ Commit: `635a2b6`.
 - Asistencia y ausencias (`completed`/`absent`) con acumulado de ausencias y alertas al profesional (RN-027).
 - Consentimiento de tratamiento de datos (`data_consent`, `data_consent_at`).
 - Recordatorios de 24 horas (`appointments:remind`) y trazabilidad de comunicaciones.
-- PWA básica (`public/manifest.webmanifest`, `public/sw.js`) con compatibilidad de notificaciones push.
+- PWA (`public/manifest.webmanifest`, `public/sw.js`, iconografía `public/icons/`) con compatibilidad de notificaciones push.
 Pendiente externo: suscripción push real requiere proveedor y claves VAPID.
 
 ## Sprint 7 — Pagos de servicios y reportes
@@ -68,8 +68,8 @@ Pendiente externo: suscripción push real requiere proveedor y claves VAPID.
 Commit: `94774dc`.
 - Pagos de servicios por negocio (`service_payments`), separados de membresías (RN-042), con verificación y comprobante digital.
 - Indicadores operativos y reportes filtrables (`/businesses/{business}/reports/summary`).
-- Exportación CSV de citas (compatible con hojas de cálculo).
-Pendiente: integración de pago completo y exportación Excel/PDF nativas requieren proveedor y aprobación de dependencias.
+- Exportación CSV, Excel (PhpSpreadsheet) y PDF (Dompdf) de citas.
+Pendiente: integración de pago completo requiere proveedor.
 
 ## Sprint 8 — Seguridad y preparación productiva
 
@@ -92,7 +92,7 @@ Criterios de cierre pendientes (externos): copias restaurables verificadas, inte
 - D-07: políticas de reserva por negocio con valores por defecto configurables (aviso 60 min, anticipación 30 días, TTL pendientes 30 min).
 - D-08: negocio sin membresías registradas conserva su comportamiento histórico; la membresía rige al registrarse.
 - D-09: 2FA por código de correo (sin dependencias externas); el panel `/admin` exige verificación.
-- D-10: exportación de reportes en CSV; Excel/PDF nativos pendientes de aprobación de dependencias.
+- D-10: exportación de reportes en CSV, Excel (PhpSpreadsheet) y PDF (Dompdf), con aislamiento por negocio.
 
 ## Pendientes para continuar
 
@@ -100,5 +100,5 @@ Criterios de cierre pendientes (externos): copias restaurables verificadas, inte
 2. Verificación real de WhatsApp Cloud API con Meta (pruebas con número comercial y facturación).
 3. Selección de proveedor de pagos (renovación automática de membresías y recaudo de servicios).
 4. Copias en almacenamiento externo y ejercicios de restauración.
-5. Iconografía PWA y suscripción push (VAPID/ proveedor).
+5. Suscripción push real (VAPID / proveedor externo).
 6. Extender 2FA/auditoría si el alcance lo exige en nuevas rutas.
