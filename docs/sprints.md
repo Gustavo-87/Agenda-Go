@@ -122,6 +122,17 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Búsqueda de clientes por nombre y teléfono, aislada por negocio y con paginación.
 - Tablas y agenda semanal adaptadas a móviles (columnas secundarias ocultas en pantallas pequeñas, sin desplazamiento horizontal innecesario).
 
+### Gestión administrativa del SaaS
+
+- Experiencias separadas por rol: el superadministrador (propietario de AgendaGo) tiene panel de plataforma, negocios y membresías, sin acceso a agendas, clientes, gestión ni reportes de los negocios (bloqueado explícitamente).
+- Dashboard de plataforma: negocios totales/activos, membresías activas y por vencer, ingresos de membresías del mes, vencimientos y negocios recientes.
+- CRUD de negocios: alta, consulta con búsqueda, edición, activación, suspensión y detalle con administradores y membresías.
+- Gestión de usuarios por negocio (superadministrador): alta incluyendo el primer administrador, cambio de rol y desvinculación, con auditoría.
+- Membresías: altas, renovaciones, pagos por verificar, estados (activa/vencida/suspendida) y paginación.
+- Vinculación de profesionales con usuarios del negocio desde Gestión (para que cada profesional administre su agenda).
+- Dashboard del administrador con indicadores del negocio; dashboard del profesional limitado a su agenda.
+- Interfaz traducida al español de Colombia, incluido el perfil y las vistas de autenticación (`lang/es_CO.json`).
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
