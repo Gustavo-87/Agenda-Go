@@ -13,8 +13,29 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        {{ __('Panel') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')">
+                        {{ __('Agenda') }}
+                    </x-nav-link>
+                    @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
+                        <x-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')">
+                            {{ __('Gestión') }}
+                        </x-nav-link>
+                    @endif
+                    <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')">
+                        {{ __('Clientes') }}
+                    </x-nav-link>
+                    @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
+                        <x-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')">
+                            {{ __('Reportes') }}
+                        </x-nav-link>
+                    @endif
+                    @if (Auth::user()->isSuperAdmin())
+                        <x-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')">
+                            {{ __('Administración') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -27,15 +48,19 @@
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd" d="M5.293 9.293a1 1 0 011.414 0L10 12.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </button>
                     </x-slot>
 
                     <x-slot name="content">
+                        <x-dropdown-link :href="route('configuracion.index')">
+                            {{ __('Configuración') }}
+                        </x-dropdown-link>
+
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
+                            {{ __('Perfil') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -45,7 +70,7 @@
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                {{ __('Cerrar sesión') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
@@ -68,7 +93,31 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('Panel') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.index')">
+                {{ __('Agenda') }}
+            </x-responsive-nav-link>
+            @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
+                <x-responsive-nav-link :href="route('gestion.index')" :active="request()->routeIs('gestion.index')">
+                    {{ __('Gestión') }}
+                </x-responsive-nav-link>
+            @endif
+            <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.index*')">
+                {{ __('Clientes') }}
+            </x-responsive-nav-link>
+            @if (Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
+                <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.index')">
+                    {{ __('Reportes') }}
+                </x-responsive-nav-link>
+            @endif
+            @if (Auth::user()->isSuperAdmin())
+                <x-responsive-nav-link :href="route('admin.pantalla')" :active="request()->routeIs('admin.pantalla')">
+                    {{ __('Administración') }}
+                </x-responsive-nav-link>
+            @endif
+            <x-responsive-nav-link :href="route('configuracion.index')" :active="request()->routeIs('configuracion.index')">
+                {{ __('Configuración') }}
             </x-responsive-nav-link>
         </div>
 
@@ -80,8 +129,8 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
+                    {{ __('Perfil') }}
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->
@@ -91,7 +140,7 @@
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                        {{ __('Cerrar sesión') }}
                     </x-responsive-nav-link>
                 </form>
             </div>
