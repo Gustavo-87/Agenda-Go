@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleExceptionController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,20 +29,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile/2fa', [TwoFactorController::class, 'enable'])->name('profile.2fa');
+});
+
+Route::middleware('guest')->group(function () {
+    Route::get('/2fa', [TwoFactorController::class, 'show'])->name('2fa.show');
+    Route::post('/2fa', [TwoFactorController::class, 'verify'])->name('2fa.verify');
 });
 
 require __DIR__.'/auth.php';
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'twofa'])->group(function () {
     Route::get('/google/connect/{professional}', [GoogleCalendarController::class, 'redirect'])->name('google.connect');
     Route::get('/google/callback', [GoogleCalendarController::class, 'callback'])->name('google.callback');
 });
 
 Route::get('/agenda', [AgendaController::class, 'index'])
-    ->middleware('auth')
+    ->middleware(['auth', 'twofa'])
     ->name('agenda.index');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'twofa'])->group(function () {
     Route::get('/professionals', [ProfessionalController::class, 'index'])
         ->name('professionals.index');
     Route::post('/professionals', [ProfessionalController::class, 'store'])

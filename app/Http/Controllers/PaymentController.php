@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\AuditLog;
 use App\Models\Business;
 use App\Models\ServicePayment;
 use Illuminate\Http\Request;
@@ -54,6 +55,7 @@ class PaymentController extends Controller
         abort_unless($payment->business !== null && $request->user()->can('manage', $payment->business), 403);
 
         $payment->update(['verified' => true]);
+        AuditLog::registrar($request->user(), 'pago.servicio.verificado', $payment);
 
         return response()->json(['message' => 'Pago verificado']);
     }

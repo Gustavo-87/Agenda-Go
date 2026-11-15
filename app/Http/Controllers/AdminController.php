@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Business;
 use App\Models\Membership;
 use App\Models\MembershipPayment;
@@ -48,6 +49,7 @@ class AdminController extends Controller
         $this->assertSuperAdmin($request);
 
         $business->update(['active' => true]);
+        AuditLog::registrar($request->user(), 'negocio.activado', $business);
 
         return response()->json(['message' => 'Negocio activado']);
     }
@@ -58,6 +60,7 @@ class AdminController extends Controller
 
         $business->update(['active' => false]);
         $business->memberships()->update(['status' => 'suspended']);
+        AuditLog::registrar($request->user(), 'negocio.suspendido', $business);
 
         return response()->json(['message' => 'Negocio suspendido']);
     }
@@ -144,6 +147,7 @@ class AdminController extends Controller
         $payment->update(['verified' => true]);
         $payment->membership->update(['status' => 'active']);
         $payment->business->update(['active' => true]);
+        AuditLog::registrar($request->user(), 'pago.membresia.verificado', $payment);
 
         return response()->json(['message' => 'Pago verificado y servicio habilitado']);
     }
