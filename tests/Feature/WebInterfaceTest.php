@@ -162,7 +162,11 @@ class WebInterfaceTest extends TestCase
             ->assertDontSee('Administración');
 
         $super = User::factory()->create(['role' => UserRole::SuperAdmin]);
-        $this->actingAs($super)->get('/dashboard')->assertSee('Administración');
+        $this->actingAs($super)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('Negocios')
+            ->assertDontSee('>Agenda<');
     }
 
     public function test_the_agenda_screen_renders_with_actions(): void
@@ -223,7 +227,7 @@ class WebInterfaceTest extends TestCase
         $this->actingAs($user)->get('/configuracion')->assertOk()->assertSee('Seguridad de la cuenta');
     }
 
-    public function test_super_admin_can_select_a_business_context(): void
+    public function test_super_admin_cannot_access_business_operations(): void
     {
         $business = Business::factory()->create();
         Customer::create([
@@ -233,12 +237,9 @@ class WebInterfaceTest extends TestCase
         ]);
         $super = User::factory()->create(['role' => UserRole::SuperAdmin]);
 
-        $this->actingAs($super)->get('/clientes')->assertOk()->assertSee('Selecciona un negocio');
-
-        $this->actingAs($super)
-            ->get('/clientes?business_id='.$business->id)
-            ->assertOk()
-            ->assertSee('Carla');
+        $this->actingAs($super)->get('/clientes')->assertStatus(403);
+        $this->actingAs($super)->get('/clientes?business_id='.$business->id)->assertStatus(403);
+        $this->actingAs($super)->get('/agenda')->assertStatus(403);
     }
 
     public function test_the_admin_agenda_shows_the_whole_business(): void
