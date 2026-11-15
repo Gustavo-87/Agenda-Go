@@ -155,6 +155,28 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Registro público deshabilitado (modelo SaaS por invitaciones): `/register` responde 404 y no es posible crear administradores, negocios ni usuarios por esa vía; se conservan las rutas de recuperación de contraseña.
 - El cierre de sesión redirige a `/login`.
 
+### Auditoría funcional y datos de prueba
+
+- `php artisan user:role {email} {role}` promueve usuarios (p. ej. `super_admin`) — **solo entornos `local`/`testing`**; el registro público está deshabilitado y no concede roles.
+- `php artisan db:seed --class=DemoBusinessSeeder` crea dos negocios sintéticos independientes (Bella Estética y Barbería Norte) con administrador, profesional vinculado, servicio, cliente y reservas; no toca los datos de Viglam.
+- Defecto corregido: cambiar el rol de un usuario desde el panel borraba su negocio; ahora solo se modifica lo enviado.
+
+### Matriz de módulos
+
+| Módulo | Estado |
+|---|---|
+| Panel SaaS (negocios, usuarios, invitaciones, membresías) | Funcional |
+| Agenda diaria/semanal y acciones de citas | Funcional |
+| Gestión (profesionales, servicios, horarios, excepciones, festivos) | Funcional |
+| Clientes (búsqueda, ficha, consentimiento) | Funcional |
+| Reportes y exportaciones (CSV, Excel, PDF) | Funcional |
+| 2FA, sesiones, recuperación de contraseñas | Funcional |
+| Autenticación y roles por negocio | Funcional |
+| Reservas por WhatsApp | Parcialmente funcional (código completo; verificación real con Meta pendiente) |
+| Pagos y renovación de membresías | Parcialmente funcional (manual; proveedor de cobro pendiente) |
+| PWA y notificaciones push | Parcialmente funcional (push real pendiente de VAPID/proveedor) |
+| Piloto comercial Viglam | Pendiente (acciones externas) |
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
