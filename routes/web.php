@@ -120,6 +120,10 @@ Route::middleware(['auth', 'twofa'])->group(function () {
         ->name('reports.summary');
     Route::get('/businesses/{business}/reports/appointments.csv', [ReportController::class, 'appointmentsCsv'])
         ->name('reports.appointments');
+    Route::get('/businesses/{business}/reports/appointments.xlsx', [ReportController::class, 'appointmentsXlsx'])
+        ->name('reports.appointments.xlsx');
+    Route::get('/businesses/{business}/reports/appointments.pdf', [ReportController::class, 'appointmentsPdf'])
+        ->name('reports.appointments.pdf');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/businesses', [AdminController::class, 'businesses'])->name('businesses');

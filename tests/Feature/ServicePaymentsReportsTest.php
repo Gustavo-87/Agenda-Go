@@ -186,4 +186,59 @@ class ServicePaymentsReportsTest extends TestCase
             ->getJson("/businesses/{$business->id}/reports/summary?from=2026-11-01&to=2026-11-30")
             ->assertStatus(403);
     }
+
+    public function test_appointments_can_be_exported_to_excel_and_pdf(): void
+    {
+        $business = Business::factory()->create();
+        $admin = $this->adminOf($business);
+        $fecha = now('America/Bogota')->addDays(3)->format('Y-m-d');
+
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        $service = Service::create([
+            'name' => 'Semipermanente',
+            'duration_minutes' => 60,
+            'price' => 50000,
+            'professional_id' => $professional->id,
+            'business_id' => $business->id,
+        ]);
+        Appointment::forceCreate([
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'business_id' => $business->id,
+            'customer_name' => 'Carla',
+            'customer_phone' => '300',
+            'starts_at' => "{$fecha} 09:00:00",
+            'ends_at' => "{$fecha} 10:00:00",
+            'status' => 'confirmed',
+        ]);
+
+        $xlsx = $this->actingAs($admin)
+            ->get("/businesses/{$business->id}/reports/appointments.xlsx?from={$fecha}&to={$fecha}")
+            ->assertOk();
+
+        $xlsx->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->assertStringStartsWith('PK', $xlsx->getContent());
+
+        $pdf = $this->actingAs($admin)
+            ->get("/businesses/{$business->id}/reports/appointments.pdf?from={$fecha}&to={$fecha}")
+            ->assertOk();
+
+        $pdf->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $pdf->getContent());
+    }
+
+    public function test_excel_and_pdf_exports_respect_business_isolation(): void
+    {
+        $ownBusiness = Business::factory()->create();
+        $otherBusiness = Business::factory()->create();
+        $admin = $this->adminOf($ownBusiness);
+
+        $this->actingAs($admin)
+            ->get("/businesses/{$otherBusiness->id}/reports/appointments.xlsx?from=2026-11-01&to=2026-11-30")
+            ->assertStatus(403);
+
+        $this->actingAs($admin)
+            ->get("/businesses/{$otherBusiness->id}/reports/appointments.pdf?from=2026-11-01&to=2026-11-30")
+            ->assertStatus(403);
+    }
 }

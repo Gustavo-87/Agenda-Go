@@ -7,11 +7,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "dompdf/dompdf": "^3.1",
         "google/auth": "^1.55",
         "guzzlehttp/guzzle": "^8.5",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
+        "phpoffice/phpspreadsheet": "^5.11",
         "phpseclib/phpseclib": "^3.0"
     },
     "require-dev": {
