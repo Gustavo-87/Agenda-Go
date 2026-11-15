@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,10 +23,21 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 Route::middleware('auth')->group(function () {
-    Route::get('/google/connect/{professional}', [\App\Http\Controllers\GoogleCalendarController::class, 'redirect'])->name('google.connect');
-    Route::get('/google/callback', [\App\Http\Controllers\GoogleCalendarController::class, 'callback'])->name('google.callback');
+    Route::get('/google/connect/{professional}', [GoogleCalendarController::class, 'redirect'])->name('google.connect');
+    Route::get('/google/callback', [GoogleCalendarController::class, 'callback'])->name('google.callback');
 });
 
-Route::get('/agenda', [\App\Http\Controllers\AgendaController::class, 'index'])
+Route::get('/agenda', [AgendaController::class, 'index'])
     ->middleware('auth')
     ->name('agenda.index');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/professionals', [ProfessionalController::class, 'index'])
+        ->name('professionals.index');
+    Route::post('/professionals', [ProfessionalController::class, 'store'])
+        ->name('professionals.store');
+    Route::patch('/professionals/{professional}', [ProfessionalController::class, 'update'])
+        ->name('professionals.update');
+    Route::patch('/professionals/{professional}/toggle', [ProfessionalController::class, 'toggle'])
+        ->name('professionals.toggle');
+});
