@@ -91,6 +91,13 @@ class AppointmentController extends Controller
 
                 $confirmada = (bool) $business->booking_auto_confirm;
 
+                // RF-RES-003: vence a más tardar 2 horas después de
+                // creada o al inicio de la cita, lo primero que ocurra
+                // (comparado en hora local del negocio).
+                $inicioLocal = Carbon::parse($data['starts_at'], 'America/Bogota');
+                $vencimiento = now('America/Bogota')->addMinutes((int) $business->booking_pending_ttl_minutes);
+                $vencimiento = $vencimiento->lessThan($inicioLocal) ? $vencimiento : $inicioLocal;
+
                 return DB::table('appointments')->insertGetId([
                     'professional_id' => $professional->id,
                     'service_id' => $service->id,
@@ -103,9 +110,7 @@ class AppointmentController extends Controller
                     'status' => $confirmada
                         ? AppointmentStatus::Confirmed->value
                         : AppointmentStatus::Pending->value,
-                    'pending_expires_at' => $confirmada
-                        ? null
-                        : now()->addMinutes((int) $business->booking_pending_ttl_minutes),
+                    'pending_expires_at' => $confirmada ? null : $vencimiento->format('Y-m-d H:i:s'),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -214,13 +219,14 @@ class AppointmentController extends Controller
 
         $business = $professional->business;
         $pendiente = $appointment->status === AppointmentStatus::Pending->value;
+        $inicioLocal = Carbon::parse($data['starts_at'], 'America/Bogota');
+        $vencimiento = now('America/Bogota')->addMinutes((int) $business->booking_pending_ttl_minutes);
+        $vencimiento = $vencimiento->lessThan($inicioLocal) ? $vencimiento : $inicioLocal;
 
         $appointment->update([
             'starts_at' => $start->format('Y-m-d H:i:s'),
             'ends_at' => $end->format('Y-m-d H:i:s'),
-            'pending_expires_at' => $pendiente
-                ? now()->addMinutes((int) $business->booking_pending_ttl_minutes)
-                : null,
+            'pending_expires_at' => $pendiente ? $vencimiento->format('Y-m-d H:i:s') : null,
         ]);
 
         return $this->respuesta($request, 'Reserva reprogramada');

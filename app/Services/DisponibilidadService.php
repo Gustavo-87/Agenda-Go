@@ -29,7 +29,7 @@ class DisponibilidadService
     public function slots(Professional $professional, Service $service, string $date): array
     {
         $business = $professional->business;
-        $dia = CarbonImmutable::parse($date)->startOfDay();
+        $dia = CarbonImmutable::parse($date, 'America/Bogota')->startOfDay();
         $ahora = now('America/Bogota');
 
         if ($business === null
@@ -42,8 +42,8 @@ class DisponibilidadService
         $slots = [];
 
         foreach ($this->ventanas($professional, $business, $dia) as [$inicio, $fin]) {
-            $cursor = Carbon::parse("{$date} {$inicio}:00");
-            $limite = Carbon::parse("{$date} {$fin}:00");
+            $cursor = Carbon::parse("{$date} {$inicio}:00", 'America/Bogota');
+            $limite = Carbon::parse("{$date} {$fin}:00", 'America/Bogota');
 
             while ($cursor->copy()->addMinutes((int) $service->duration_minutes)->lessThanOrEqualTo($limite)) {
                 if ($cursor->greaterThanOrEqualTo($anticipacionMinima)
@@ -80,7 +80,7 @@ class DisponibilidadService
             ->where('ends_at', '>', $inicio->format('Y-m-d H:i:s'))
             ->where(function ($query) {
                 $query->where('status', AppointmentStatus::Confirmed->value)
-                    ->orWhere('pending_expires_at', '>', now());
+                    ->orWhere('pending_expires_at', '>', now('America/Bogota'));
             })
             ->lockForUpdate()
             ->exists();

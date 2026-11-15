@@ -28,7 +28,7 @@ class ExpirePendingAppointments extends Command
     public function handle(): int
     {
         $count = Appointment::where('status', AppointmentStatus::Pending->value)
-            ->where('pending_expires_at', '<=', now())
+            ->where('pending_expires_at', '<=', now('America/Bogota'))
             ->update(['status' => AppointmentStatus::Expired->value]);
 
         $this->info("Solicitudes expiradas: {$count}");

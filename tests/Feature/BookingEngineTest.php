@@ -172,7 +172,7 @@ class BookingEngineTest extends TestCase
         $this->reservar($professional, $service, "{$fecha} 09:00:00")
             ->assertStatus(422);
 
-        $this->travel(31)->minutes();
+        $this->travel(121)->minutes();
 
         $this->artisan('appointments:expire')->assertSuccessful();
 
@@ -319,6 +319,31 @@ class BookingEngineTest extends TestCase
 
         $this->assertContains('09:00', $respuesta);
         $this->assertNotContains('18:00', $respuesta);
+    }
+
+    public function test_pending_requests_expire_at_two_hours_or_at_the_start_of_the_appointment(): void
+    {
+        Queue::fake();
+        $this->travelTo(now('America/Bogota')->startOfDay()->addHours(10));
+
+        [, $professional, $service] = $this->escenario([
+            'booking_auto_confirm' => false,
+            'booking_min_notice_minutes' => 0,
+        ]);
+
+        $fecha = now('America/Bogota')->toDateString();
+
+        // Inicio (11:00) antes de las 2 horas: vence al iniciar la cita.
+        $this->reservar($professional, $service, "{$fecha} 11:00:00")->assertStatus(201);
+
+        $cercana = Appointment::where('starts_at', "{$fecha} 11:00:00")->firstOrFail();
+        $this->assertSame("{$fecha} 11:00:00", $cercana->pending_expires_at->format('Y-m-d H:i:s'));
+
+        // Inicio (15:00) después de las 2 horas: vence a las 2 horas (12:00).
+        $this->reservar($professional, $service, "{$fecha} 15:00:00")->assertStatus(201);
+
+        $lejana = Appointment::where('starts_at', "{$fecha} 15:00:00")->firstOrFail();
+        $this->assertSame("{$fecha} 12:00:00", $lejana->pending_expires_at->format('Y-m-d H:i:s'));
     }
 
     public function test_the_booking_policy_is_configurable_per_business(): void
