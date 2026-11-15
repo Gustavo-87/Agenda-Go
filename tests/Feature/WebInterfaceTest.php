@@ -320,4 +320,13 @@ class WebInterfaceTest extends TestCase
             ->assertOk()
             ->assertSee('lunes, 16 de noviembre');
     }
+
+    public function test_forms_render_submit_buttons(): void
+    {
+        $this->get('/login')->assertOk()->assertSee('type="submit"', false);
+        $this->get('/register')->assertOk()->assertSee('type="submit"', false);
+
+        $user = User::factory()->create(['role' => UserRole::Professional]);
+        $this->actingAs($user)->get('/configuracion')->assertOk()->assertSee('type="submit"', false);
+    }
 }
