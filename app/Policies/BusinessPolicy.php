@@ -12,15 +12,17 @@ class BusinessPolicy
      */
     public function view(User $user, Business $business): bool
     {
-        return $user->isSuperAdmin() || $user->belongsToBusiness($business);
+        return $user->belongsToBusiness($business);
     }
 
     /**
      * Determine whether the user can manage the business.
+     *
+     * El superadministrador administra la plataforma, no los negocios
+     * de sus clientes: las operaciones de negocio exigen membresía.
      */
     public function manage(User $user, Business $business): bool
     {
-        return $user->isSuperAdmin()
-            || ($user->isAdmin() && $user->belongsToBusiness($business));
+        return $user->isAdmin() && $user->belongsToBusiness($business);
     }
 }

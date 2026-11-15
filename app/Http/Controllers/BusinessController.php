@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Models\Professional;
 use Illuminate\Http\Request;
 
 class BusinessController extends Controller
@@ -13,7 +14,8 @@ class BusinessController extends Controller
     public function pantalla(Request $request)
     {
         $user = $request->user();
-        $business = $this->contextoNegocio($request);
+
+        $business = $user->isSuperAdmin() ? null : $this->contextoNegocio($request);
 
         if ($business !== null) {
             abort_unless($user->can('view', $business), 403);
@@ -22,7 +24,8 @@ class BusinessController extends Controller
         return view('settings.index', [
             'negocio' => $business,
             'puedeGestionar' => $business !== null && $user->can('manage', $business),
-            'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
+            'negocios' => collect(),
+            'miProfesional' => Professional::where('user_id', $user->id)->first(),
         ]);
     }
 

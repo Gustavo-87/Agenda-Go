@@ -33,13 +33,13 @@ class BusinessRoleAuthorizationTest extends TestCase
         $this->assertTrue($user->belongsToBusiness($business));
     }
 
-    public function test_a_super_admin_can_manage_any_business(): void
+    public function test_a_super_admin_cannot_manage_business_operations(): void
     {
         $superAdmin = User::factory()->create(['role' => UserRole::SuperAdmin]);
         $business = Business::factory()->create();
 
-        $this->assertTrue(Gate::forUser($superAdmin)->allows('manage', $business));
-        $this->assertTrue(Gate::forUser($superAdmin)->allows('view', $business));
+        $this->assertFalse(Gate::forUser($superAdmin)->allows('manage', $business));
+        $this->assertFalse(Gate::forUser($superAdmin)->allows('view', $business));
     }
 
     public function test_an_admin_can_manage_their_own_business(): void

@@ -95,7 +95,8 @@ class GoogleCalendarController extends Controller
      */
     private function puedeGestionar(User $user, Professional $professional): bool
     {
-        return $professional->user_id === $user->id
+        return $user->isSuperAdmin()
+            || $professional->user_id === $user->id
             || ($professional->business !== null && $user->can('manage', $professional->business));
     }
 }
