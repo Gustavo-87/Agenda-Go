@@ -52,6 +52,84 @@
                 </div>
             @endif
 
+            @if ($miProfesional ?? null)
+                <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-1">
+                            <div class="w-10 h-10 rounded-xl bg-turquoise-100 text-turquoise-700 flex items-center justify-center"><x-icon name="clock" /></div>
+                            <div>
+                                <h3 class="text-lg font-bold">Mi disponibilidad</h3>
+                                <p class="text-sm text-gray-500">Jornadas, descansos y bloqueos de mi agenda (RN-015).</p>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ route('schedules.store', $miProfesional) }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mt-4">
+                            @csrf
+                            <select name="weekday" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
+                                @foreach (['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $indice => $dia)
+                                    <option value="{{ $indice }}">{{ $dia }}</option>
+                                @endforeach
+                            </select>
+                            <x-text-input name="start_time" type="time" class="w-full" aria-label="Hora de inicio" required />
+                            <x-text-input name="end_time" type="time" class="w-full" aria-label="Hora de fin" required />
+                            <label class="flex items-center gap-2 text-sm text-gray-600">
+                                <input type="hidden" name="is_break" value="0">
+                                <input type="checkbox" name="is_break" value="1" class="rounded border-warm-300 text-turquoise-600 focus:ring-turquoise-500">
+                                Descanso
+                            </label>
+                            <x-primary-button class="justify-center">Agregar jornada</x-primary-button>
+                        </form>
+
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            @forelse ($misHorarios as $horario)
+                                <form method="POST" action="{{ route('schedules.destroy', $horario) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold border {{ $horario->is_break ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-turquoise-100 border-turquoise-100 text-turquoise-700' }} hover:opacity-80">
+                                        {{ ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$horario->weekday] }}
+                                        {{ substr($horario->start_time, 0, 5) }}–{{ substr($horario->end_time, 0, 5) }}
+                                        {{ $horario->is_break ? '· descanso' : '' }} ✕
+                                    </button>
+                                </form>
+                            @empty
+                                <p class="text-sm text-gray-500">Sin jornadas configuradas (se aplica el horario general 09:00–18:00).</p>
+                            @endforelse
+                        </div>
+
+                        <h4 class="text-sm font-bold text-petrol mt-6 mb-2">Vacaciones, bloqueos y horarios extra</h4>
+                        <form method="POST" action="{{ route('exceptions.store', $miProfesional) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3">
+                            @csrf
+                            <select name="kind" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
+                                <option value="vacation">Vacaciones</option>
+                                <option value="block">Bloqueo</option>
+                                <option value="extra">Horario extra</option>
+                            </select>
+                            <x-text-input name="starts_on" type="date" class="w-full" aria-label="Desde" required />
+                            <x-text-input name="ends_on" type="date" class="w-full" aria-label="Hasta" />
+                            <x-text-input name="start_time" type="time" class="w-full" aria-label="Hora de inicio" />
+                            <x-text-input name="end_time" type="time" class="w-full" aria-label="Hora de fin" />
+                            <x-primary-button class="justify-center">Registrar</x-primary-button>
+                        </form>
+
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            @forelse ($misExcepciones as $excepcion)
+                                <form method="POST" action="{{ route('exceptions.destroy', $excepcion) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-warm-100 border border-warm-200 text-gray-700 hover:opacity-80">
+                                        {{ ['vacation' => 'Vacaciones', 'block' => 'Bloqueo', 'extra' => 'Extra'][$excepcion->kind] }}
+                                        {{ $excepcion->starts_on }}{{ $excepcion->ends_on && $excepcion->ends_on !== $excepcion->starts_on ? ' → '.$excepcion->ends_on : '' }}
+                                        ✕
+                                    </button>
+                                </form>
+                            @empty
+                                <p class="text-sm text-gray-500">Sin excepciones registradas.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if ($puedeGestionar)
                 <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                     <div class="p-6">

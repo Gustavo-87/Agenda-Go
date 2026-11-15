@@ -21,11 +21,15 @@ class BusinessController extends Controller
             abort_unless($user->can('view', $business), 403);
         }
 
+        $miProfesional = Professional::where('user_id', $user->id)->first();
+
         return view('settings.index', [
             'negocio' => $business,
             'puedeGestionar' => $business !== null && $user->can('manage', $business),
             'negocios' => collect(),
-            'miProfesional' => Professional::where('user_id', $user->id)->first(),
+            'miProfesional' => $miProfesional,
+            'misHorarios' => $miProfesional?->workSchedules()->orderBy('weekday')->orderBy('start_time')->get() ?? collect(),
+            'misExcepciones' => $miProfesional?->scheduleExceptions()->orderBy('starts_on')->get() ?? collect(),
         ]);
     }
 
@@ -40,7 +44,7 @@ class BusinessController extends Controller
             'booking_min_notice_minutes' => ['sometimes', 'integer', 'min:0', 'max:10080'],
             'booking_max_advance_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
             'booking_auto_confirm' => ['sometimes', 'boolean'],
-            'booking_pending_ttl_minutes' => ['sometimes', 'integer', 'min:5', 'max:1440'],
+            'booking_pending_ttl_minutes' => ['sometimes', 'integer', 'min:5', 'max:120'],
         ]);
 
         $business->update($data);

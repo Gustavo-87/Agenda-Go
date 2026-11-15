@@ -10,7 +10,11 @@ class ScheduleExceptionController extends Controller
 {
     public function index(Request $request, Professional $professional)
     {
-        abort_unless($request->user()->can('manage', $professional), 403);
+        abort_unless(
+            $professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $professional),
+            403
+        );
 
         return response()->json([
             'data' => $professional->scheduleExceptions()->orderBy('starts_on')->get(),
@@ -19,7 +23,11 @@ class ScheduleExceptionController extends Controller
 
     public function store(Request $request, Professional $professional)
     {
-        abort_unless($request->user()->can('manage', $professional), 403);
+        abort_unless(
+            $professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $professional),
+            403
+        );
 
         $data = $request->validate([
             'kind' => ['required', 'in:vacation,block,extra'],
@@ -39,7 +47,11 @@ class ScheduleExceptionController extends Controller
 
     public function destroy(Request $request, ScheduleException $exception)
     {
-        abort_unless($request->user()->can('manage', $exception->professional), 403);
+        abort_unless(
+            $exception->professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $exception->professional),
+            403
+        );
 
         $exception->delete();
 

@@ -10,7 +10,11 @@ class WorkScheduleController extends Controller
 {
     public function index(Request $request, Professional $professional)
     {
-        abort_unless($request->user()->can('manage', $professional), 403);
+        abort_unless(
+            $professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $professional),
+            403
+        );
 
         return response()->json([
             'data' => $professional->workSchedules()
@@ -20,7 +24,11 @@ class WorkScheduleController extends Controller
 
     public function store(Request $request, Professional $professional)
     {
-        abort_unless($request->user()->can('manage', $professional), 403);
+        abort_unless(
+            $professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $professional),
+            403
+        );
 
         $data = $request->validate([
             'weekday' => ['required', 'integer', 'min:0', 'max:6'],
@@ -39,7 +47,11 @@ class WorkScheduleController extends Controller
 
     public function destroy(Request $request, WorkSchedule $schedule)
     {
-        abort_unless($request->user()->can('manage', $schedule->professional), 403);
+        abort_unless(
+            $schedule->professional->user_id === $request->user()->id
+                || $request->user()->can('manage', $schedule->professional),
+            403
+        );
 
         $schedule->delete();
 

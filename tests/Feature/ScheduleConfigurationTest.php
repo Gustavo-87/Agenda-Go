@@ -220,4 +220,46 @@ class ScheduleConfigurationTest extends TestCase
             ])
             ->assertStatus(403);
     }
+
+    public function test_professionals_can_manage_their_own_availability(): void
+    {
+        $business = Business::factory()->create();
+        $userA = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => UserRole::Professional,
+        ]);
+        $professionalA = Professional::create([
+            'name' => 'Stefania',
+            'business_id' => $business->id,
+            'user_id' => $userA->id,
+        ]);
+        $professionalB = Professional::create(['name' => 'Laura', 'business_id' => $business->id]);
+
+        $this->actingAs($userA)
+            ->postJson("/professionals/{$professionalA->id}/schedules", [
+                'weekday' => 0,
+                'start_time' => '08:00',
+                'end_time' => '12:00',
+            ])
+            ->assertStatus(201);
+
+        $this->actingAs($userA)
+            ->postJson("/professionals/{$professionalA->id}/exceptions", [
+                'kind' => 'vacation',
+                'starts_on' => '2026-12-24',
+                'ends_on' => '2026-12-31',
+            ])
+            ->assertStatus(201);
+
+        $this->actingAs($userA)
+            ->postJson("/professionals/{$professionalB->id}/schedules", [
+                'weekday' => 0,
+                'start_time' => '08:00',
+                'end_time' => '12:00',
+            ])
+            ->assertStatus(403);
+
+        $this->assertDatabaseCount('work_schedules', 1);
+        $this->assertDatabaseCount('schedule_exceptions', 1);
+    }
 }
