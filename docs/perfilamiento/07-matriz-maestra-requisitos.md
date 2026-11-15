@@ -43,13 +43,13 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | RF-MEM-004 | 5 días de gracia tras el vencimiento y luego suspensión de nuevas reservas, conservando datos. | 02 §2, 04 RN-005/006/007 | Implementado | `Business::puedeReservar()`; `MembershipAdministrationTest` | — |
 | RF-MEM-005 | Aviso por WhatsApp 5 días antes del vencimiento, salvo renovación confirmada. | 02 §2, 04 RN-010 | Implementado | `NotifyExpiringMemberships` (con salto de renovadas); prueba del comando | Envío real pendiente de verificación Meta |
 | RF-MEM-006 | Cancelación sin permanencia mínima; el servicio se conserva hasta finalizar el período pagado. | 02 §2, 04 | Implementado | `AdminController::cancelMembership`; `Business::puedeReservar` (cancelada conserva servicio); `MembershipAdministrationTest` | — |
-| Dec-15 | Retención de datos 90 días tras la cancelación, salvo obligación legal; exportación bajo solicitud al superadministrador. | 01 | Pendiente | — | Definir proceso de retención/exportación |
+| Dec-15 | Retención de datos 90 días tras la cancelación, salvo obligación legal; exportación bajo solicitud al superadministrador. | 01 | Parcial | `retention:report` (inventario de retención vencida, sin borrado automático); `PendingRequirementsTest` | Falta exportación bajo solicitud y proceso validado de purga |
 
 ### B3. Mensajería incluida
 
 | ID | Decisión y regla verificable | Origen | Estado | Evidencia | Validación manual |
 |---|---|---|---|---|---|
-| RF-MEN-01 → RF-MEN-001 | La membresía incluye mensajería; los excedentes requieren autorización expresa. Mostrar consumo incluido, utilizado, disponible y autorizado. | Entrevista, 01 | Condicionado | Trazabilidad parcial: `whatsapp_messages` (entrantes/salientes) | La **cuota incluida no está aprobada**; falta panel de consumo y mecanismo de autorización de excedentes |
+| RF-MEN-01 → RF-MEN-001 | La membresía incluye mensajería; los excedentes requieren autorización expresa. Mostrar consumo incluido, utilizado, disponible y autorizado. | Entrevista, 01 | Parcial | Panel de consumo en Configuración (incluido/utilizado/disponible/autorizados) y cuotas solo editables por superadministrador con auditoría; `PendingRequirementsTest` | **Valores comerciales (cuota/tarifa) sin aprobar**: los campos permanecen «por definir» |
 | Dec-04 | Cada negocio utiliza su propio número de WhatsApp (identificación por Phone Number ID). | 01, 04 | Implementado | `businesses.whatsapp_phone_number_id`; `WhatsAppMultiempresaTest` | Activación de números por negocio pendiente con Meta |
 
 ### B4. Reservas y agenda
@@ -71,8 +71,8 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 |---|---|---|---|---|---|
 | RF-CLI-001 | Historial de clientes separado por negocio (citas, servicios, cancelaciones, ausencias). | 02 §6 | Implementado | `customers` + `CustomerController`; `CustomerCommunicationsTest` | — |
 | RF-CLI-002 | Aviso y autorización de tratamiento de datos verificable. | 02 §6 | Implementado | `data_consent`/`data_consent_at`; `CustomerCommunicationsTest` | — |
-| Dec-12 | Consentimiento comercial independiente del tratamiento de datos. | 01 | Pendiente | — | Definir opt-in comercial (campañas) |
-| Dec-10 | Recordatorio 24 horas antes con confirmación de asistencia o cancelación; avisos a profesionales por WhatsApp y plataforma. | 01, 02 §7 | Parcial | `appointments:remind`; avisos de ausencia por WhatsApp | Falta confirmación por respuesta del cliente y avisos "en plataforma" (bandeja) |
+| Dec-12 | Consentimiento comercial independiente del tratamiento de datos. | 01 | Implementado | `customers.commercial_consent` (+evidencia/revocación y auditoría); `PendingRequirementsTest` | — |
+| Dec-10 | Recordatorio 24 horas antes con confirmación de asistencia o cancelación; avisos a profesionales por WhatsApp y plataforma. | 01, 02 §7 | Parcial | `appointments:remind`; respuestas de WhatsApp confirman/cancelan (`ReservaWhatsAppService`); avisos de ausencia; `PendingRequirementsTest` | Falta aviso "en plataforma" (bandeja) |
 | RF-COM-* | Registro y trazabilidad de comunicaciones. | 01, 02 §7 | Implementado | `whatsapp_messages` | — |
 
 ### B6. Pagos de servicios
@@ -108,7 +108,7 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 | ID | Decisión y regla verificable | Origen | Estado | Evidencia | Validación manual |
 |---|---|---|---|---|---|
 | RV-001/002 | Viglam; Stefania; jornada lunes a sábado 08:00–12:00 y 14:00–18:00. | 04 §RV | Parcial | Todo configurable (jornadas partidas y descansos); `ViglamBusinessSeeder` vincula datos existentes | Preconfigurar jornadas reales en el piloto |
-| RV-003/005 | Domingos y lunes festivos colombianos bloqueados por defecto. | 04 §RV | Parcial | Domingos quedan cerrados al configurar lun–sáb; festivos manuales | Falta precarga de festivos colombianos |
+| RV-003/005 | Domingos y lunes festivos colombianos bloqueados por defecto. | 04 §RV | Implementado | `holidays:import` (festivos oficiales con bloqueo por defecto) y excepciones `extra` por profesional; `PendingRequirementsTest` | Importar la lista oficial de festivos en la configuración del piloto |
 | RV-006/007 | Servicios habituales de 120 minutos y combinado de 180 minutos. | 04 §RV | Parcial | Duraciones configurables (5–720 min) | Crear los servicios reales de Viglam en el piloto |
 | RV-004 | Excepciones configurables (vacaciones, bloqueos, extras). | 04 §RV | Implementado | `ScheduleException`; `ScheduleConfigurationTest` | — |
 
@@ -128,7 +128,8 @@ la entrevista usaba dos dígitos. No se reescriben los documentos de origen.
 - **D2 (nomenclatura):** la entrevista usa RF-MEM-01..03 y RF-MEN-01; el documento aprobado usa RF-MEM-001..006. Se conservan ambos con la tabla de alias (sección A); no se duplican requisitos.
 - **D3 (resuelta):** cada profesional gestiona su disponibilidad y bloqueos desde Configuración ("Mi disponibilidad"), con los mismos permisos y aislamiento del negocio.
 - **D4 (resuelta):** flujo explícito de cancelación de membresía sin permanencia; el servicio se conserva hasta el fin del período pagado.
-- **D5 (sin pruebas aún / pendientes):** consentimiento comercial, retención de 90 días, panel de consumo de mensajería, precarga de festivos y confirmación de asistencia por respuesta del cliente.
+- **D5 (resuelta):** consentimiento comercial con evidencia y revocación, reporte de retención de 90 días (sin borrado automático), panel de consumo de mensajería con autorización expresa de excedentes, importación de festivos con bloqueo por defecto y excepciones por profesional, y confirmación/cancelación de citas por respuestas de WhatsApp. Pendientes restantes: exportación bajo solicitud, aviso "en plataforma" y proceso validado de purga.
+- **D6 (defectos detectados y corregidos):** delimitador de regex inválido en `holidays:import` y relación de negocio cacheada en pantallas (datos frescos por solicitud).
 
 ## E. Referencias cruzadas
 
