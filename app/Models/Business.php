@@ -59,4 +59,12 @@ class Business extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    /**
+     * @return HasMany<Holiday, $this>
+     */
+    public function holidays(): HasMany
+    {
+        return $this->hasMany(Holiday::class);
+    }
 }

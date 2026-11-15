@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ProfessionalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleExceptionController;
@@ -66,4 +67,11 @@ Route::middleware('auth')->group(function () {
         ->name('exceptions.store');
     Route::delete('/exceptions/{exception}', [ScheduleExceptionController::class, 'destroy'])
         ->name('exceptions.destroy');
+
+    Route::get('/businesses/{business}/holidays', [HolidayController::class, 'index'])
+        ->name('holidays.index');
+    Route::post('/businesses/{business}/holidays', [HolidayController::class, 'store'])
+        ->name('holidays.store');
+    Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])
+        ->name('holidays.destroy');
 });
