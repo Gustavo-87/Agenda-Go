@@ -13,14 +13,32 @@
 
             <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
-                    <h3 class="text-lg font-bold mb-4">Registrar negocio</h3>
-                    <form method="POST" action="{{ route('admin.businesses.store') }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                    <h3 class="text-lg font-bold mb-1">Registrar negocio</h3>
+                    <p class="text-sm text-gray-500 mb-4">Crea un nuevo negocio en la plataforma. Los campos con <span class="text-red-600 font-semibold">*</span> son obligatorios.</p>
+                    <form method="POST" action="{{ route('admin.businesses.store') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         @csrf
-                        <x-text-input name="name" placeholder="Nombre" class="w-full" required />
-                        <x-text-input name="slug" placeholder="Identificador (slug)" class="w-full" required />
-                        <x-text-input name="sector" placeholder="Sector" class="w-full" />
-                        <x-text-input name="phone" placeholder="Teléfono" class="w-full" />
-                        <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Registrar</x-primary-button>
+                        <div>
+                            <x-input-label for="negocio-name" value="Nombre del negocio *" />
+                            <x-text-input id="negocio-name" name="name" placeholder="Ej. Viglam" class="w-full mt-1" required />
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="negocio-slug" value="Identificador (slug) *" />
+                            <x-text-input id="negocio-slug" name="slug" placeholder="Ej. viglam" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Nombre único sin espacios ni mayúsculas.</p>
+                            <x-input-error :messages="$errors->get('slug')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="negocio-sector" value="Sector" />
+                            <x-text-input id="negocio-sector" name="sector" placeholder="Ej. belleza" class="w-full mt-1" />
+                        </div>
+                        <div>
+                            <x-input-label for="negocio-phone" value="Teléfono de contacto" />
+                            <x-text-input id="negocio-phone" name="phone" placeholder="Ej. 300 000 0000" class="w-full mt-1" />
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <x-primary-button><x-icon name="plus" class="w-4 h-4" />Registrar</x-primary-button>
+                        </div>
                     </form>
                 </div>
             </div>

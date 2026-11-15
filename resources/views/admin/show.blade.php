@@ -38,12 +38,15 @@
                         @csrf
                         @method('PATCH')
                         <div>
-                            <x-input-label value="Nombre" />
+                            <x-input-label value="Nombre *" />
                             <x-text-input name="name" :value="$negocio->name" class="w-full mt-1" required />
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
                         <div>
-                            <x-input-label value="Identificador (slug)" />
+                            <x-input-label value="Identificador (slug) *" />
                             <x-text-input name="slug" :value="$negocio->slug" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Nombre único sin espacios ni mayúsculas.</p>
+                            <x-input-error :messages="$errors->get('slug')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label value="Sector" />
@@ -67,17 +70,28 @@
             <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
                     <h3 class="text-lg font-bold mb-1">Invitar usuarios</h3>
-                    <p class="text-sm text-gray-500 mb-4">Recibirán un correo con un enlace temporal para crear su contraseña.</p>
+                    <p class="text-sm text-gray-500 mb-4">Recibirán un correo con un enlace temporal para crear su contraseña. Los campos con <span class="text-red-600 font-semibold">*</span> son obligatorios.</p>
 
-                    <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                    <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         @csrf
-                        <x-text-input name="email" type="email" placeholder="Correo electrónico" class="w-full" required />
-                        <select name="role" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
-                            <option value="admin">Administrador</option>
-                            <option value="professional">Profesional</option>
-                        </select>
-                        <div></div>
-                        <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Enviar invitación</x-primary-button>
+                        <div>
+                            <x-input-label for="invitacion-email" value="Correo electrónico *" />
+                            <x-text-input id="invitacion-email" name="email" type="email" placeholder="usuario@negocio.com" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Debe ser un correo no registrado en AgendaGo.</p>
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="invitacion-role" value="Rol *" />
+                            <select id="invitacion-role" name="role" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" required>
+                                <option value="admin">Administrador</option>
+                                <option value="professional">Profesional</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">El administrador gestiona el negocio; el profesional, su agenda.</p>
+                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                        </div>
+                        <div class="flex items-end lg:col-span-2">
+                            <x-primary-button class="justify-center w-full"><x-icon name="plus" class="w-4 h-4" />Enviar invitación</x-primary-button>
+                        </div>
                     </form>
 
                     @if ($usuarios->isEmpty())
@@ -135,13 +149,31 @@
                 <div class="p-6">
                     <h3 class="text-lg font-bold mb-4">Membresías del negocio</h3>
 
-                    <form method="POST" action="{{ route('admin.memberships.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6">
+                    <form method="POST" action="{{ route('admin.memberships.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         @csrf
-                        <x-text-input name="starts_on" type="date" class="w-full" required />
-                        <x-text-input name="ends_on" type="date" class="w-full" required />
-                        <x-text-input name="amount" type="number" placeholder="Monto" class="w-full" required />
-                        <x-text-input name="paid_on" type="date" class="w-full" required />
-                        <x-primary-button class="justify-center">Registrar membresía</x-primary-button>
+                        <div>
+                            <x-input-label for="detalle-starts" value="Fecha de inicio *" />
+                            <x-text-input id="detalle-starts" name="starts_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Primer día del período mensual.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="detalle-ends" value="Fecha de vencimiento *" />
+                            <x-text-input id="detalle-ends" name="ends_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Último día del período (con 5 días de gracia).</p>
+                        </div>
+                        <div>
+                            <x-input-label for="detalle-amount" value="Valor mensual (COP) *" />
+                            <x-text-input id="detalle-amount" name="amount" type="number" min="0" placeholder="Ej. 150000" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">En pesos colombianos, sin decimales.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="detalle-paid" value="Fecha de pago *" />
+                            <x-text-input id="detalle-paid" name="paid_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Fecha en que se realizó el pago.</p>
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <x-primary-button>Registrar membresía</x-primary-button>
+                        </div>
                     </form>
 
                     @if ($negocio->memberships->isEmpty())
@@ -170,8 +202,8 @@
                                             <td class="py-3 px-4">
                                                 <form method="POST" action="{{ route('admin.memberships.renew', $membresia) }}" class="flex gap-2 items-center">
                                                     @csrf
-                                                    <x-text-input name="amount" type="number" placeholder="Monto" class="w-24" required />
-                                                    <x-text-input name="paid_on" type="date" class="w-36" required />
+                                                    <x-text-input name="amount" type="number" placeholder="Valor (COP)" title="Valor mensual (COP)" class="w-24" required />
+                                                    <x-text-input name="paid_on" type="date" title="Fecha de pago" class="w-36" required />
                                                     <x-secondary-button type="submit">Renovar</x-secondary-button>
                                                 </form>
                                             </td>

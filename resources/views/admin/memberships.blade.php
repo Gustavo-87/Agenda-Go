@@ -15,20 +15,48 @@
 
             <div class="bg-white rounded-2xl border border-warm-200 shadow-card">
                 <div class="p-6">
-                    <h3 class="text-lg font-bold mb-4">Registro de membresía</h3>
-                    <form method="POST" action="{{ route('admin.memberships.store', ['business' => $negocios->first()?->id ?? 0]) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3"
+                    <h3 class="text-lg font-bold mb-1">Registro de membresía</h3>
+                    <p class="text-sm text-gray-500 mb-4">Registra un nuevo período mensual y su pago. Los campos con <span class="text-red-600 font-semibold">*</span> son obligatorios.</p>
+
+                    <form method="POST" action="{{ route('admin.memberships.store', ['business' => $negocios->first()?->id ?? 0]) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                         onsubmit="this.action = '/admin/businesses/' + this.querySelector('[name=business_id]').value + '/memberships'">
                         @csrf
-                        <select name="business_id" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
-                            @foreach ($negocios as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }}</option>
-                            @endforeach
-                        </select>
-                        <x-text-input name="starts_on" type="date" class="w-full" required />
-                        <x-text-input name="ends_on" type="date" class="w-full" required />
-                        <x-text-input name="amount" type="number" placeholder="Monto" class="w-full" required />
-                        <x-text-input name="paid_on" type="date" class="w-full" required />
-                        <x-primary-button class="justify-center">Registrar</x-primary-button>
+                        <div>
+                            <x-input-label for="membresia-business" value="Negocio *" />
+                            <select id="membresia-business" name="business_id" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" required>
+                                @foreach ($negocios as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Negocio al que pertenece la membresía.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="membresia-starts" value="Fecha de inicio *" />
+                            <x-text-input id="membresia-starts" name="starts_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Primer día del período mensual.</p>
+                            <x-input-error :messages="$errors->get('starts_on')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="membresia-ends" value="Fecha de vencimiento *" />
+                            <x-text-input id="membresia-ends" name="ends_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Último día del período (con 5 días de gracia).</p>
+                            <x-input-error :messages="$errors->get('ends_on')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="membresia-amount" value="Valor mensual (COP) *" />
+                            <x-text-input id="membresia-amount" name="amount" type="number" min="0" placeholder="Ej. 150000" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Valor de la membresía en pesos colombianos, sin decimales.</p>
+                            <x-input-error :messages="$errors->get('amount')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label for="membresia-paid" value="Fecha de pago *" />
+                            <x-text-input id="membresia-paid" name="paid_on" type="date" class="w-full mt-1" required />
+                            <p class="text-xs text-gray-500 mt-1">Fecha en que el negocio realizó el pago.</p>
+                            <x-input-error :messages="$errors->get('paid_on')" class="mt-2" />
+                        </div>
+                        <div class="flex items-end">
+                            <x-primary-button class="justify-center w-full">Registrar</x-primary-button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -69,8 +97,8 @@
                                             <td class="py-3 px-4">
                                                 <form method="POST" action="{{ route('admin.memberships.renew', $membresia) }}" class="flex gap-2 items-center">
                                                     @csrf
-                                                    <x-text-input name="amount" type="number" placeholder="Monto" class="w-24" required />
-                                                    <x-text-input name="paid_on" type="date" class="w-36" required />
+                                                    <x-text-input name="amount" type="number" placeholder="Valor (COP)" title="Valor mensual (COP)" class="w-24" required />
+                                                    <x-text-input name="paid_on" type="date" title="Fecha de pago" class="w-36" required />
                                                     <x-secondary-button type="submit">Renovar</x-secondary-button>
                                                 </form>
                                             </td>

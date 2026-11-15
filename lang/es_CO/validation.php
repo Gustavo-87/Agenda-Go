@@ -71,6 +71,7 @@ return [
         'amount' => 'monto',
         'paid_on' => 'fecha de pago',
         'professional_id' => 'profesional',
+        'role' => 'rol',
         'service_id' => 'servicio',
         'business_id' => 'negocio',
         'customer_name' => 'nombre del cliente',

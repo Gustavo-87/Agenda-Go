@@ -49,7 +49,7 @@
                         <form method="POST" action="{{ route('invitations.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 border-t border-warm-100 pt-4">
                             @csrf
                             <input type="hidden" name="role" value="professional">
-                            <x-text-input name="email" type="email" placeholder="Invitar profesional por correo…" class="w-full" required />
+                            <x-text-input name="email" type="email" aria-label="Correo electrónico de la profesional a invitar" placeholder="Invitar profesional por correo…" class="w-full" required />
                             <div class="text-xs text-gray-500 self-center">Recibirá un enlace temporal para crear su contraseña.</div>
                             <div></div>
                             <x-primary-button class="justify-center">Enviar invitación</x-primary-button>
