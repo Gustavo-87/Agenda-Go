@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\User;
 use App\Notifications\TwoFactorCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -127,5 +128,58 @@ class TwoFactorAuthenticationTest extends TestCase
             ->withSession(['two_factor_verified' => false])
             ->postJson("/admin/businesses/{$business->id}/activate")
             ->assertStatus(403);
+    }
+
+    public function test_pending_codes_can_be_recovered_locally(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create([
+            'role' => UserRole::Professional,
+            'two_factor_enabled' => true,
+            'password' => 'password-secreta',
+        ]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password-secreta'])
+            ->assertRedirect(route('2fa.show'));
+
+        $codigo = null;
+        Notification::assertSentTo($user, TwoFactorCode::class, function ($notification) use (&$codigo) {
+            $codigo = $notification->codigo;
+
+            return true;
+        });
+
+        $this->artisan('two-factor:code', ['email' => $user->email])
+            ->expectsOutputToContain($codigo)
+            ->assertSuccessful();
+
+        $this->post('/2fa', ['code' => $codigo])->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticated();
+    }
+
+    public function test_login_survives_mail_delivery_failures(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create([
+            'role' => UserRole::Professional,
+            'two_factor_enabled' => true,
+            'password' => 'password-secreta',
+        ]);
+
+        Mail::shouldReceive('send')
+            ->andThrow(new \RuntimeException('Transporte de correo no disponible'));
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password-secreta'])
+            ->assertRedirect(route('2fa.show'));
+
+        $this->artisan('two-factor:code', ['email' => $user->email])
+            ->expectsOutputToContain('Código 2FA pendiente')
+            ->assertSuccessful();
+    }
+
+    public function test_the_recovery_command_refuses_unknown_users(): void
+    {
+        $this->artisan('two-factor:code', ['email' => 'desconocido@viglam.test'])
+            ->assertFailed();
     }
 }

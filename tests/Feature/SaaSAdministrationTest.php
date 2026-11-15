@@ -44,6 +44,22 @@ class SaaSAdministrationTest extends TestCase
         $this->actingAs($super)->get('/reportes')->assertStatus(403);
     }
 
+    public function test_the_super_admin_panel_has_no_operational_business_management(): void
+    {
+        $business = Business::factory()->create();
+        $super = $this->superAdmin();
+
+        foreach (['/admin', '/admin/memberships', '/admin/businesses/'.$business->id] as $ruta) {
+            $this->actingAs($super)
+                ->get($ruta)
+                ->assertOk()
+                ->assertDontSee('href="/agenda"')
+                ->assertDontSee('href="/clientes"')
+                ->assertDontSee('href="/gestion"')
+                ->assertDontSee('href="/reportes"');
+        }
+    }
+
     public function test_business_can_be_edited_and_its_users_managed(): void
     {
         $super = $this->superAdmin();
