@@ -38,9 +38,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/2fa', [TwoFactorController::class, 'show'])->name('2fa.show');
     Route::post('/2fa', [TwoFactorController::class, 'verify'])->name('2fa.verify');
-    Route::get('/invitations/accept', [InvitationController::class, 'acceptForm'])->name('invitations.accept');
-    Route::post('/invitations/accept', [InvitationController::class, 'accept'])->name('invitations.accept.store');
 });
+
+// Aceptación de invitaciones: accesible con o sin sesión, con
+// verificación de identidad en InvitationController.
+Route::get('/invitations/accept', [InvitationController::class, 'acceptForm'])->name('invitations.accept');
+Route::post('/invitations/accept', [InvitationController::class, 'accept'])->name('invitations.accept.store');
 
 require __DIR__.'/auth.php';
 

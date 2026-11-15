@@ -206,6 +206,84 @@ class InvitationsTest extends TestCase
         $this->assertNull($deAdmin->fresh()->accepted_at);
     }
 
+    public function test_an_authenticated_user_cannot_accept_an_invitation_for_another_account(): void
+    {
+        $business = Business::factory()->create();
+        $intruso = User::factory()->create(['role' => UserRole::Professional]);
+
+        $invitation = Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'admin',
+            'email' => 'ana@viglam.test',
+            'token' => hash('sha256', 'token-identidad'),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($intruso)
+            ->get('/invitations/accept?token=token-identidad')
+            ->assertForbidden();
+
+        $this->actingAs($intruso)
+            ->post('/invitations/accept', [
+                'token' => 'token-identidad',
+                'name' => 'Ana',
+                'password' => 'password-secreta',
+                'password_confirmation' => 'password-secreta',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('users', ['email' => 'ana@viglam.test']);
+        $this->assertNull($invitation->fresh()->accepted_at);
+    }
+
+    public function test_new_accounts_must_set_a_password_to_complete_the_invitation(): void
+    {
+        $business = Business::factory()->create();
+
+        Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'professional',
+            'email' => 'pro@viglam.test',
+            'token' => hash('sha256', 'token-formulario'),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->get('/invitations/accept?token=token-formulario')
+            ->assertOk()
+            ->assertSee('Activar mi cuenta');
+
+        $this->post('/invitations/accept', [
+            'token' => 'token-formulario',
+            'name' => 'Pro',
+        ])->assertSessionHasErrors('password');
+
+        $this->assertDatabaseMissing('users', ['email' => 'pro@viglam.test']);
+    }
+
+    public function test_invitations_for_already_registered_accounts_fail_gracefully(): void
+    {
+        $business = Business::factory()->create();
+        $registrado = User::factory()->create(['email' => 'ana@viglam.test']);
+
+        Invitation::create([
+            'business_id' => $business->id,
+            'role' => 'admin',
+            'email' => 'ana@viglam.test',
+            'token' => hash('sha256', 'token-existente'),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->post('/invitations/accept', [
+            'token' => 'token-existente',
+            'name' => 'Ana',
+            'password' => 'password-nueva',
+            'password_confirmation' => 'password-nueva',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('users', 1);
+        $this->assertFalse(\Hash::check('password-nueva', $registrado->fresh()->password));
+    }
+
     public function test_expired_invitations_cannot_be_accepted(): void
     {
         $business = Business::factory()->create();

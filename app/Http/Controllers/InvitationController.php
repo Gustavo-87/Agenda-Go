@@ -11,6 +11,7 @@ use App\Notifications\InvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class InvitationController extends Controller
@@ -80,8 +81,16 @@ class InvitationController extends Controller
 
     public function acceptForm(Request $request)
     {
+        $invitation = $this->invitationValida($request);
+
+        abort_unless(
+            $this->identidadValida($request, $invitation),
+            403,
+            'La invitación es para '.$invitation->email.'. Cierra sesión para aceptarla con esa cuenta.'
+        );
+
         return view('invitations.accept', [
-            'invitation' => $this->invitationValida($request),
+            'invitation' => $invitation,
         ]);
     }
 
@@ -94,6 +103,18 @@ class InvitationController extends Controller
         ]);
 
         $invitation = $this->invitationValida($request->merge(['token' => $data['token']]));
+
+        abort_unless(
+            $this->identidadValida($request, $invitation),
+            403,
+            'La invitación es para '.$invitation->email.'. Cierra sesión para aceptarla con esa cuenta.'
+        );
+
+        if (User::where('email', $invitation->email)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => 'El correo de la invitación ya tiene una cuenta registrada. Inicia sesión normalmente.',
+            ]);
+        }
 
         User::create([
             'name' => $data['name'],
@@ -179,6 +200,17 @@ class InvitationController extends Controller
             || ($invitation->role === 'professional' && $user->can('manage', $invitation->business));
 
         abort_unless($autorizado, 403);
+    }
+
+    /**
+     * La invitación solo puede aceptarla un invitado sin sesión o la
+     * propia cuenta invitada (identidad verificada).
+     */
+    private function identidadValida(Request $request, Invitation $invitation): bool
+    {
+        $user = $request->user();
+
+        return $user === null || $user->email === $invitation->email;
     }
 
     /**
