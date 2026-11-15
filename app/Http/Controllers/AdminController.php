@@ -7,9 +7,15 @@ use App\Models\Business;
 use App\Models\Invitation;
 use App\Models\Membership;
 use App\Models\MembershipPayment;
+use App\Models\ScheduleException;
+use App\Models\ServicePayment;
 use App\Models\User;
+use App\Models\WhatsAppMessage;
+use App\Models\WorkSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -324,6 +330,101 @@ class AdminController extends Controller
         AuditLog::registrar($request->user(), 'mensajeria.cuota.autorizada', $business, $data);
 
         return $this->respuesta($request, 'Cuota de mensajería actualizada');
+    }
+
+    /**
+     * Exportación de datos del negocio bajo solicitud del
+     * superadministrador (Dec-15), con auditoría y archivo seguro.
+     */
+    public function exportBusiness(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $professionalIds = $business->professionals()->pluck('id');
+
+        $datos = [
+            'exportado_en' => now()->toIso8601String(),
+            'negocio' => $business->toArray(),
+            'usuarios' => $business->users()->get()->toArray(),
+            'profesionales' => $business->professionals()->get()->toArray(),
+            'servicios' => $business->services()->get()->toArray(),
+            'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)->get()->toArray(),
+            'excepciones' => ScheduleException::whereIn('professional_id', $professionalIds)->get()->toArray(),
+            'festivos' => $business->holidays()->get()->toArray(),
+            'clientes' => $business->customers()->get()->toArray(),
+            'citas' => $business->appointments()->get()->toArray(),
+            'membresias' => $business->memberships()->get()->toArray(),
+            'pagos_membresia' => MembershipPayment::where('business_id', $business->id)->get()->toArray(),
+            'pagos_servicios' => ServicePayment::where('business_id', $business->id)->get()->toArray(),
+            'mensajes_whatsapp' => WhatsAppMessage::where('business_id', $business->id)->get()->toArray(),
+        ];
+
+        $archivo = 'export_'.$business->slug.'_'.now()->format('Ymd_His').'_'.Str::random(8).'.json';
+        File::ensureDirectoryExists(storage_path('app/exports'));
+        File::put(
+            storage_path('app/exports/'.$archivo),
+            json_encode($datos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
+        @chmod(storage_path('app/exports/'.$archivo), 0600);
+
+        AuditLog::registrar($request->user(), 'negocio.exportado', $business, ['archivo' => $archivo]);
+
+        return $this->respuesta($request, 'Exportación generada de forma segura', ['archivo' => $archivo], 201);
+    }
+
+    public function downloadExport(Request $request, string $archivo)
+    {
+        $this->assertSuperAdmin($request);
+
+        abort_unless((bool) preg_match('~^export_[a-z0-9\-]+_\d{8}_\d{6}_[a-zA-Z0-9]+\.json$~', $archivo), 404);
+
+        $ruta = storage_path('app/exports/'.$archivo);
+        abort_unless(is_file($ruta), 404);
+
+        AuditLog::registrar($request->user(), 'negocio.exportacion.descargada', null, ['archivo' => $archivo]);
+
+        return response()->download($ruta);
+    }
+
+    /**
+     * Revisión administrativa de retención (90 días) con exclusiones
+     * legales; la purga se ejecuta solo con autorización explícita.
+     */
+    public function retentionReview(Request $request)
+    {
+        $this->assertSuperAdmin($request);
+
+        $limite = now()->subDays(90)->toDateString();
+
+        $elegibles = Business::whereHas('memberships', function ($query) use ($limite) {
+            $query->where('status', 'cancelled')->where('ends_on', '<', $limite);
+        })
+            ->whereDoesntHave('memberships', fn ($query) => $query->where('status', 'active'))
+            ->with('memberships')
+            ->get()
+            ->map(function (Business $business) {
+                return [
+                    'negocio' => $business,
+                    'fin_periodo' => $business->memberships->max('ends_on'),
+                    'clientes' => $business->customers()->count(),
+                    'citas' => $business->appointments()->count(),
+                    'mensajes' => WhatsAppMessage::where('business_id', $business->id)->count(),
+                ];
+            });
+
+        return view('admin.retention', ['elegibles' => $elegibles]);
+    }
+
+    public function legalHold(Request $request, Business $business)
+    {
+        $this->assertSuperAdmin($request);
+
+        $data = $request->validate(['legal_hold' => ['required', 'boolean']]);
+
+        $business->update(['legal_hold' => (bool) $data['legal_hold']]);
+        AuditLog::registrar($request->user(), 'negocio.retencion.legal', $business, $data);
+
+        return $this->respuesta($request, 'Retención legal actualizada');
     }
 
     private function assertSuperAdmin(Request $request): void

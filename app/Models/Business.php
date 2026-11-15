@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'name', 'slug', 'sector', 'email', 'phone', 'active',
+    'name', 'slug', 'sector', 'email', 'phone', 'active', 'legal_hold',
     'booking_min_notice_minutes', 'booking_max_advance_days',
     'booking_auto_confirm', 'booking_pending_ttl_minutes',
     'whatsapp_phone_number_id', 'messaging_included', 'messaging_overage_authorized',

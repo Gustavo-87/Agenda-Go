@@ -18,7 +18,14 @@
                 <div class="p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h3 class="text-lg font-bold">Datos del negocio</h3>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
+                            <form method="POST" action="{{ route('admin.businesses.export', $negocio) }}">
+                                @csrf
+                                <x-primary-button type="submit">Exportar datos</x-primary-button>
+                            </form>
+                            <a href="{{ route('admin.retention.review') }}" class="px-4 py-2.5 rounded-xl border border-warm-300 bg-white text-xs sm:text-sm font-semibold text-petrol hover:bg-warm-100">
+                                Retención de datos
+                            </a>
                             @unless ($negocio->active)
                                                                 <form method="POST" action="{{ route('admin.businesses.activate', $negocio) }}">
                                     @csrf
