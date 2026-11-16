@@ -1,6 +1,6 @@
 {
   "version": "7.3",
-  "data_api_version": "7.3",
+  "data_api_version": "3.0",
   "routing_model": {
     "APPOINTMENT": [
       "DETAILS",
@@ -288,7 +288,6 @@
                 "name": "telefono",
                 "label": "Teléfono de contacto",
                 "input-type": "phone",
-                "data-source": "${data.telefono_remitente}",
                 "required": true
               },
               {
@@ -475,8 +474,7 @@
                 "type": "TextInput",
                 "name": "telefono",
                 "label": "Teléfono de contacto (si reservaste con otro)",
-                "input-type": "phone",
-                "data-source": "${data.telefono_remitente}"
+                "input-type": "phone"
               },
               {
                 "type": "Dropdown",

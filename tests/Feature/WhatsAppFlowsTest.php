@@ -256,6 +256,11 @@ class WhatsAppFlowsTest extends TestCase
         $flow = json_decode((string) file_get_contents(base_path('flow-reservas.json')), true, 512, JSON_THROW_ON_ERROR);
 
         $this->assertSame('7.3', $flow['version']);
+        $this->assertSame('3.0', $flow['data_api_version']);
+
+        // El esquema de Flows no admite data-source en TextInput.
+        $serializado = json_encode($flow['screens'], JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('"type": "TextInput", "name": "telefono", "label": "Teléfono de contacto", "input-type": "phone", "data-source"', $serializado);
 
         $ids = collect($flow['screens'])->pluck('id')->all();
         foreach (['APPOINTMENT', 'DETAILS', 'SUMMARY', 'SUCCESS', 'CANCELAR', 'CONFIRMAR_CANCELACION'] as $pantalla) {

@@ -41,7 +41,7 @@ Configuración requerida para la puesta en marcha (acción externa):
 
 Implementado en código (verificado con pruebas simuladas):
 - Menú inicial «Agendar cita / Cancelar cita» por negocio (nombre dinámico del Phone Number ID).
-- Reserva por Flows con campos: nombre, teléfono de contacto (precargado con el número del remitente y reemplazable; el remitente original se conserva en `whatsapp_messages` y en los datos de respuesta), profesional, servicio, fecha, hora en formato 12 h (valores internos 24 h) y confirmación.
+- Reserva por Flows con campos: nombre, teléfono de contacto (el número detectado se muestra en pantalla para confirmarlo o cambiarlo —el esquema de Flows no admite prefill en TextInput—; el remitente original se conserva en `whatsapp_messages` y en los datos de respuesta), profesional, servicio, fecha, hora en formato 12 h (valores internos 24 h) y confirmación.
 - Disponibilidad reutilizada del motor: excluye horarios ocupados, descansos, festivos y fechas no disponibles.
 - Cancelación por Flows: listado de citas futuras del remitente por negocio, selección y confirmación expresa; la regla de cancelación vive en `Appointment::cancelarPorCliente()` compartida con el bot de texto.
 - Alternativa conversacional por texto conservada.
