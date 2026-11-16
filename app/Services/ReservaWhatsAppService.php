@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
-use App\Jobs\EnviarNotificacionWhatsApp;
-use App\Models\AppNotification;
 use App\Models\Appointment;
 use App\Models\Business;
 use App\Support\FormatoHora;
@@ -218,9 +216,7 @@ class ReservaWhatsAppService
             return '¡Cita confirmada! Te esperamos el '.FormatoHora::fechaHora($cita->starts_at).'.';
         }
 
-        $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
-
-        return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' fue cancelada.';
+        return null;
     }
 
     /**
@@ -328,29 +324,8 @@ class ReservaWhatsAppService
         $cita = Appointment::find($estado['cita_id'] ?? 0);
         Cache::forget($clave);
 
-        if ($cita === null || ! in_array($cita->status, ['pending', 'confirmed'], true)) {
+        if ($cita === null || ! $cita->cancelarPorCliente()) {
             return 'La cita ya no está disponible para cancelar.';
-        }
-
-        $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
-
-        $resumen = FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio');
-
-        AppNotification::registrar(
-            $cita->business,
-            null,
-            'cita',
-            'Cita cancelada por el cliente: '.$resumen.'.'
-        );
-
-        $profesional = $cita->professional;
-
-        if ($profesional?->phone !== null) {
-            EnviarNotificacionWhatsApp::dispatch(
-                $profesional->phone,
-                'Cita cancelada por el cliente: '.$resumen.'.',
-                $cita->business_id
-            );
         }
 
         return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' fue cancelada.';

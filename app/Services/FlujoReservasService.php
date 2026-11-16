@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
+use App\Models\Appointment;
 use App\Models\Business;
 use App\Support\FormatoHora;
 use Carbon\CarbonImmutable;
@@ -15,6 +16,8 @@ class FlujoReservasService
 {
     private ?int $businessId = null;
 
+    private string $remitente = '';
+
     /**
      * Identidad del canal: negocio explícito o canal configurado.
      */
@@ -25,7 +28,8 @@ class FlujoReservasService
 
     public function procesar(array $solicitud, ?int $businessId = null): array
     {
-        $this->businessId = $businessId;
+        $this->businessId = $businessId ?? $this->negocioDesdePayload($solicitud);
+        $this->remitente = trim((string) ($solicitud['phone_number'] ?? $solicitud['from'] ?? ''));
         if (($solicitud['action'] ?? '') === 'ping') {
             return ['data' => ['status' => 'active']];
         }
@@ -35,6 +39,10 @@ class FlujoReservasService
 
         if (in_array($solicitud['action'] ?? '', ['INIT', 'BACK'])) {
             return $this->agenda();
+        }
+
+        if (in_array($accion, ['cancelar', 'cancelar_seleccion', 'cancelar_confirmar', 'menu'], true)) {
+            return $this->cancelacion($datos, $accion);
         }
 
         $profesional = (int) ($datos['profesional'] ?? 0);
@@ -48,7 +56,7 @@ class FlujoReservasService
 
         if (in_array($accion, ['revisar', 'confirmar'])) {
             $nombre = trim((string) ($datos['nombre'] ?? ''));
-            $telefono = trim((string) ($datos['telefono'] ?? ''));
+            $telefono = trim((string) ($datos['telefono'] ?? '')) ?: $this->remitente;
 
             $prof = DB::table('professionals')
                 ->where('id', $profesional)->where('active', true)
@@ -80,6 +88,7 @@ class FlujoReservasService
                 'hora' => $hora,
                 'nombre' => $nombre,
                 'telefono' => $telefono,
+                'telefono_remitente' => $this->remitente,
             ];
 
             if ($accion === 'revisar') {
@@ -102,6 +111,7 @@ class FlujoReservasService
 
                 return $this->respuesta('SUCCESS', [
                     'mensaje' => 'Reserva #'.$id.' confirmada para '.$fecha.' a las '.FormatoHora::hora($hora).'.',
+                    'remitente' => $this->remitente,
                 ]);
             } catch (ValidationException $e) {
                 return $this->respuesta('SUMMARY', [
@@ -119,6 +129,95 @@ class FlujoReservasService
         }
 
         return $this->agenda();
+    }
+
+    /**
+     * Identidad del negocio: desde el payload del Flow (business_id o
+     * phone_number_id) o desde el canal configurado.
+     */
+    private function negocioDesdePayload(array $solicitud): ?int
+    {
+        if (isset($solicitud['business_id'])) {
+            return (int) $solicitud['business_id'];
+        }
+
+        $phoneId = (string) ($solicitud['phone_number_id'] ?? '');
+
+        return $phoneId !== ''
+            ? Business::where('whatsapp_phone_number_id', $phoneId)->value('id')
+            : null;
+    }
+
+    /**
+     * Cancelación mediante Flows: lista las citas futuras del
+     * remitente, exige confirmación y reutiliza la regla única de
+     * cancelación del modelo (sin duplicar reglas de negocio).
+     */
+    private function cancelacion(array $datos, string $accion): array
+    {
+        if ($accion === 'menu') {
+            return $this->agenda();
+        }
+
+        if ($this->remitente === '' && trim((string) ($datos['telefono'] ?? '')) === '') {
+            return $this->respuesta('SUCCESS', [
+                'mensaje' => 'No encontramos citas próximas para cancelar.',
+            ]);
+        }
+
+        $telefono = trim((string) ($datos['telefono'] ?? '')) ?: $this->remitente;
+
+        $citas = Appointment::where('customer_phone', $telefono)
+            ->where('business_id', $this->canalId())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('starts_at', '>', now('America/Bogota'))
+            ->orderBy('starts_at')
+            ->get();
+
+        if ($accion === 'cancelar' || $citas->isEmpty()) {
+            return $this->respuesta('CANCELAR', [
+                'citas' => $citas->map(fn ($cita) => [
+                    'id' => (string) $cita->id,
+                    'title' => FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio'),
+                ])->values()->all(),
+                'aviso' => $citas->isEmpty()
+                    ? 'No encontramos citas próximas para cancelar.'
+                    : 'Selecciona la cita que deseas cancelar.',
+                'telefono_remitente' => $this->remitente,
+            ]);
+        }
+
+        $citaId = (int) ($datos['cita'] ?? 0);
+        $cita = $citas->firstWhere('id', $citaId);
+
+        if ($cita === null) {
+            return $this->respuesta('CANCELAR', [
+                'citas' => $citas->map(fn ($c) => [
+                    'id' => (string) $c->id,
+                    'title' => FormatoHora::fechaHora($c->starts_at).' — '.($c->service?->name ?? 'Servicio'),
+                ])->values()->all(),
+                'aviso' => 'Selecciona una cita válida.',
+            ]);
+        }
+
+        if ($accion === 'cancelar_seleccion') {
+            return $this->respuesta('CONFIRMAR_CANCELACION', [
+                'cita' => (string) $cita->id,
+                'resumen' => FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio'),
+                'aviso' => 'Confirma la cancelación. Esta acción libera el horario.',
+            ]);
+        }
+
+        if (! $cita->cancelarPorCliente()) {
+            return $this->respuesta('SUCCESS', [
+                'mensaje' => 'La cita ya no está disponible para cancelar.',
+            ]);
+        }
+
+        return $this->respuesta('SUCCESS', [
+            'mensaje' => 'Cita del '.FormatoHora::fechaHora($cita->starts_at).' cancelada.',
+            'remitente' => $this->remitente,
+        ]);
     }
 
     private function respuesta(string $pantalla, array $datos): array
@@ -208,6 +307,7 @@ class FlujoReservasService
             'horarios' => array_map(
                 fn ($h) => ['id' => $h, 'title' => FormatoHora::hora($h)], $horarios
             ),
+            'telefono_remitente' => $this->remitente,
             'habilitar_horarios' => count($horarios) > 0,
             'aviso' => $aviso ?: 'Selecciona una profesional y un servicio.',
         ]);

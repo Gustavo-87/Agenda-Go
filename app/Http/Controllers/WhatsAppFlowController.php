@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\WhatsAppMessage;
+use App\Services\FlujoReservasService;
 use Illuminate\Http\Request;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
@@ -14,7 +16,7 @@ class WhatsAppFlowController extends Controller
     {
         $archivo = storage_path('app/private/whatsapp_flow_private.pem');
 
-        if (!is_readable($archivo)) {
+        if (! is_readable($archivo)) {
             return response('Clave no disponible', 503);
         }
 
@@ -28,8 +30,8 @@ class WhatsAppFlowController extends Controller
             $clavePrivada = PublicKeyLoader::loadPrivateKey(
                 file_get_contents($archivo)
             )->withPadding(RSA::ENCRYPTION_OAEP)
-             ->withHash('sha256')
-             ->withMGFHash('sha256');
+                ->withHash('sha256')
+                ->withMGFHash('sha256');
 
             $claveCifrada = base64_decode($datos['encrypted_aes_key'], true);
             $vector = base64_decode($datos['initial_vector'], true);
@@ -62,8 +64,19 @@ class WhatsAppFlowController extends Controller
 
             $solicitud = json_decode($texto, true, 512, JSON_THROW_ON_ERROR);
 
+            $remitente = trim((string) ($solicitud['phone_number'] ?? $solicitud['data']['phone_number'] ?? ''));
+
+            if ($remitente !== '') {
+                WhatsAppMessage::create([
+                    'direction' => 'inbound',
+                    'phone' => $remitente,
+                    'body' => 'flow:'.(string) ($solicitud['action'] ?? ''),
+                    'status' => 'flow',
+                ]);
+            }
+
             $respuesta = json_encode(
-                app(\App\Services\FlujoReservasService::class)
+                app(FlujoReservasService::class)
                     ->procesar($solicitud),
                 JSON_THROW_ON_ERROR
             );
@@ -84,12 +97,13 @@ class WhatsAppFlowController extends Controller
             }
 
             return response(
-                base64_encode($cifrado . $etiqueta),
+                base64_encode($cifrado.$etiqueta),
                 200
             )->header('Content-Type', 'text/plain');
 
         } catch (Throwable $e) {
             report($e);
+
             return response('Error de cifrado', 421);
         }
     }
