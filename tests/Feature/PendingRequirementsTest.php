@@ -243,7 +243,13 @@ class PendingRequirementsTest extends TestCase
         $this->assertDatabaseHas('appointments', ['id' => $citas[$businessA->id]->id, 'status' => 'confirmed']);
         $this->assertDatabaseHas('appointments', ['id' => $citas[$businessB->id]->id, 'status' => 'pending']);
 
-        $respuesta = $servicio->procesar('3000000000', 'cancelar', $businessA->id);
+        $respuesta = $servicio->procesar('3000000000', 'Quiero cancelar mi cita', $businessA->id);
+        $this->assertStringContainsString('Selecciona la cita', $respuesta);
+
+        $respuesta = $servicio->procesar('3000000000', '1', $businessA->id);
+        $this->assertStringContainsString('Confirmar cancelación', $respuesta);
+
+        $respuesta = $servicio->procesar('3000000000', '1', $businessA->id);
         $this->assertStringContainsString('cancelada', $respuesta);
         $this->assertDatabaseHas('appointments', ['id' => $citas[$businessA->id]->id, 'status' => 'cancelled']);
 

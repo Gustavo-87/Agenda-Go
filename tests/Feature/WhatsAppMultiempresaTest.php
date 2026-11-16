@@ -230,8 +230,10 @@ class WhatsAppMultiempresaTest extends TestCase
             return str_contains((string) ($request['text']['body'] ?? ''), 'confirmada');
         });
 
-        // Cancelación por respuesta del cliente.
-        $this->webhook('PHONE-DEMO', 'wamid.8', 'app-secret', 'cancelar')->assertOk();
+        // Cancelación por respuesta del cliente (diálogo guiado).
+        $this->webhook('PHONE-DEMO', 'wamid.8', 'app-secret', 'Quiero cancelar mi cita')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.9', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.10', 'app-secret', '1')->assertOk();
 
         $this->assertDatabaseHas('appointments', [
             'business_id' => $business->id,

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
+use App\Jobs\EnviarNotificacionWhatsApp;
+use App\Models\AppNotification;
 use App\Models\Appointment;
 use App\Models\Business;
 use App\Support\FormatoHora;
@@ -20,6 +22,18 @@ class ReservaWhatsAppService
         $clave = 'reserva_whatsapp_'.$businessId.'_'.hash('sha256', $telefono);
         $estado = Cache::get($clave);
         $mensaje = trim($mensaje);
+        $palabra = mb_strtolower($mensaje);
+        $paso = is_array($estado) ? (string) ($estado['paso'] ?? '') : '';
+
+        if (in_array($paso, ['cancelar_eleccion', 'cancelar_confirmar'], true)) {
+            return $this->gestionarCancelacion($mensaje, $palabra, $businessId, $estado, $clave);
+        }
+
+        $enReserva = in_array($paso, ['profesional', 'servicio', 'fecha', 'hora', 'nombre', 'confirmar'], true);
+
+        if ($this->quiereCancelar($palabra) && ! $enReserva) {
+            return $this->iniciarCancelacion($telefono, $businessId, $clave);
+        }
 
         if (! $estado) {
             $respuestaCita = $this->gestionarRespuestaCita($telefono, $mensaje, $businessId);
@@ -170,9 +184,8 @@ class ReservaWhatsAppService
         $palabra = mb_strtolower(trim($mensaje));
 
         $confirmar = in_array($palabra, ['confirmar', 'confirmo', 'si', 'sí', 'asistire', 'asistiré'], true);
-        $cancelar = in_array($palabra, ['cancelar', 'cancelo', 'no'], true);
 
-        if (! $confirmar && ! $cancelar) {
+        if (! $confirmar) {
             return null;
         }
 
@@ -198,6 +211,119 @@ class ReservaWhatsAppService
         }
 
         $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
+
+        return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' fue cancelada.';
+    }
+
+    /**
+     * Detección de intención de cancelación en lenguaje natural.
+     */
+    private function quiereCancelar(string $palabra): bool
+    {
+        return str_contains($palabra, 'cancel');
+    }
+
+    /**
+     * Paso 1: identifica al cliente por teléfono y muestra sus próximas
+     * citas para que seleccione cuál cancelar.
+     */
+    private function iniciarCancelacion(string $telefono, ?int $businessId, string $clave): string
+    {
+        $citas = Appointment::where('customer_phone', $telefono)
+            ->where('business_id', $businessId)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('starts_at', '>', now('America/Bogota'))
+            ->orderBy('starts_at')
+            ->get();
+
+        if ($citas->isEmpty()) {
+            return 'No encontramos citas próximas para cancelar.';
+        }
+
+        Cache::put($clave, [
+            'paso' => 'cancelar_eleccion',
+            'citas' => $citas->pluck('id')->all(),
+        ], now()->addHours(2));
+
+        $lineas = $citas->map(
+            fn ($cita) => FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio')
+        )->values();
+
+        return "Selecciona la cita que deseas cancelar:\n".$this->numerar($lineas)
+            ."\n0. Volver al menú principal";
+    }
+
+    /**
+     * Pasos 2 y 3: selección de la cita y confirmación expresa; el
+     * estado se actualiza y la disponibilidad se libera únicamente
+     * tras confirmar (políticas de cancelación del negocio: solicitudes
+     * vigentes o citas confirmadas, antes del inicio).
+     */
+    private function gestionarCancelacion(string $mensaje, string $palabra, ?int $businessId, array $estado, string $clave): string
+    {
+        if ($mensaje === '0' || in_array($palabra, ['menu', 'menú', 'volver', 'atras', 'atrás'], true)) {
+            Cache::forget($clave);
+
+            return $this->menuProfesionales($businessId);
+        }
+
+        if (($estado['paso'] ?? '') === 'cancelar_eleccion') {
+            $indice = ctype_digit($mensaje) ? (int) $mensaje - 1 : -1;
+            $ids = $estado['citas'] ?? [];
+
+            if (! isset($ids[$indice])) {
+                return 'Selecciona un número válido de la lista o 0 para volver al menú principal.';
+            }
+
+            Cache::put($clave, [
+                'paso' => 'cancelar_confirmar',
+                'cita_id' => $ids[$indice],
+            ], now()->addHours(2));
+
+            $cita = Appointment::find($ids[$indice]);
+
+            return 'Cita seleccionada: '.FormatoHora::fechaHora($cita->starts_at)
+                .' — '.($cita->service?->name ?? 'Servicio')
+                ."\n1. Confirmar cancelación\n2. Volver al menú principal";
+        }
+
+        if ($mensaje === '2') {
+            Cache::forget($clave);
+
+            return $this->menuProfesionales($businessId);
+        }
+
+        if ($mensaje !== '1') {
+            return "1. Confirmar cancelación\n2. Volver al menú principal";
+        }
+
+        $cita = Appointment::find($estado['cita_id'] ?? 0);
+        Cache::forget($clave);
+
+        if ($cita === null || ! in_array($cita->status, ['pending', 'confirmed'], true)) {
+            return 'La cita ya no está disponible para cancelar.';
+        }
+
+        $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
+
+        $resumen = FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio');
+
+        AppNotification::registrar(
+            $cita->business,
+            null,
+            'cita',
+            'Cita cancelada por el cliente: '.$resumen.'.'
+        );
+
+        $profesional = $cita->professional;
+
+        if ($profesional?->phone !== null) {
+            EnviarNotificacionWhatsApp::dispatch(
+                $profesional->phone,
+                'Cita cancelada por el cliente: '.$resumen.'.',
+                $cita->business_id
+            );
+        }
 
         return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' fue cancelada.';
     }
