@@ -396,7 +396,7 @@ class WebInterfaceTest extends TestCase
         $this->actingAs($this->adminOf($business))
             ->get('/gestion')
             ->assertOk()
-            ->assertSee('grid-cols-1 sm:grid-cols-2 lg:grid-cols-6', false)
+            ->assertSee('grid-cols-1 sm:grid-cols-2 lg:grid-cols-3', false)
             ->assertSee('overflow-x-auto');
     }
 
