@@ -114,6 +114,11 @@ class BusinessIsolationTest extends TestCase
 
         $respuesta = app(ReservaWhatsAppService::class)->procesar('3000000000', 'hola');
 
+        $this->assertStringContainsString('Agendar cita', $respuesta);
+        $this->assertStringNotContainsString('Laura', $respuesta);
+
+        $respuesta = app(ReservaWhatsAppService::class)->procesar('3000000000', '1');
+
         $this->assertStringContainsString('Stefania', $respuesta);
         $this->assertStringNotContainsString('Laura', $respuesta);
     }

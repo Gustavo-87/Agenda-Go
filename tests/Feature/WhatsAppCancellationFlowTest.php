@@ -108,10 +108,26 @@ class WhatsAppCancellationFlowTest extends TestCase
         $respuesta = $servicio->procesar('3111111111', 'cancelar mi cita', $business->id);
         $this->assertStringContainsString('No encontramos citas próximas', $respuesta);
 
+        // Acceso cruzado: las citas de otro negocio no se listan.
+        $otro = Business::factory()->create(['name' => 'Otro Negocio', 'active' => true]);
+        $otroProfesional = Professional::create(['name' => 'Lucía', 'business_id' => $otro->id]);
+        $otroServicio = Service::create([
+            'name' => 'Servicio ajeno',
+            'duration_minutes' => 60,
+            'price' => 10000,
+            'professional_id' => $otroProfesional->id,
+            'business_id' => $otro->id,
+        ]);
+        $this->crearCita($otro, $otroProfesional, $otroServicio, now('America/Bogota')->addDays(2)->format('Y-m-d 09:00:00'));
+
+        $respuesta = $servicio->procesar('3111111111', 'cancelar mi cita', $business->id);
+        $this->assertStringContainsString('No encontramos citas próximas', $respuesta);
+
         // Duplicado: repetir la solicitud no crea estados ni cancela nada.
         $respuesta = $servicio->procesar('3111111111', 'Quiero cancelar mi cita', $business->id);
         $this->assertStringContainsString('No encontramos citas próximas', $respuesta);
-        $this->assertDatabaseCount('appointments', 0);
+        $this->assertDatabaseCount('appointments', 1); // solo la cita del otro negocio
+        $this->assertDatabaseHas('appointments', ['status' => 'confirmed']);
     }
 
     public function test_the_cancel_flow_can_be_aborted_back_to_the_menu(): void
@@ -123,7 +139,9 @@ class WhatsAppCancellationFlowTest extends TestCase
 
         $this->assertStringContainsString('0. Volver al menú principal', $servicio->procesar('3000000000', 'cancelar', $business->id));
 
-        $this->assertStringContainsString('Elige una profesional', $servicio->procesar('3000000000', '0', $business->id));
+        $respuesta = $servicio->procesar('3000000000', '0', $business->id);
+        $this->assertStringContainsString('Agendar cita', $respuesta);
+        $this->assertStringContainsString('Cancelar cita', $respuesta);
 
         $respuesta = $servicio->procesar('3000000000', 'cancelar mi cita', $business->id);
         $this->assertStringContainsString('Selecciona la cita', $respuesta);
@@ -132,7 +150,8 @@ class WhatsAppCancellationFlowTest extends TestCase
         $this->assertStringContainsString('Confirmar cancelación', $respuesta);
 
         $respuesta = $servicio->procesar('3000000000', '2', $business->id);
-        $this->assertStringContainsString('Elige una profesional', $respuesta);
+        $this->assertStringContainsString('Agendar cita', $respuesta);
+        $this->assertStringContainsString('Cancelar cita', $respuesta);
 
         $this->assertSame(AppointmentStatus::Confirmed->value, $cita->fresh()->status);
     }

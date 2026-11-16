@@ -77,7 +77,16 @@ class WhatsAppMultiempresaTest extends TestCase
 
         Http::assertSent(function (Request $request) {
             return str_contains($request->url(), 'PHONE-B/messages')
-                && str_contains($request['text']['body'], 'Laura')
+                && str_contains($request['text']['body'], 'Agendar cita')
+                && str_contains($request['text']['body'], 'Cancelar cita')
+                && ! str_contains($request['text']['body'], 'Laura')
+                && ! str_contains($request['text']['body'], 'Stefania');
+        });
+
+        $this->webhook('PHONE-B', 'wamid.1b', 'app-secret', '1')->assertOk();
+
+        Http::assertSent(function (Request $request) {
+            return str_contains($request['text']['body'], 'Laura')
                 && ! str_contains($request['text']['body'], 'Stefania');
         });
 
@@ -109,6 +118,13 @@ class WhatsAppMultiempresaTest extends TestCase
         $this->negocioConProfesional('otro-negocio', 'Laura', 'PHONE-B');
 
         $this->webhook('DESCONOCIDO', 'wamid.3')->assertOk();
+
+        Http::assertSent(function (Request $request) {
+            return str_contains($request['text']['body'], 'Agendar cita')
+                && ! str_contains($request['text']['body'], 'Laura');
+        });
+
+        $this->webhook('DESCONOCIDO', 'wamid.3b', 'app-secret', '1')->assertOk();
 
         Http::assertSent(function (Request $request) {
             return str_contains($request['text']['body'], 'Stefania')
@@ -211,6 +227,7 @@ class WhatsAppMultiempresaTest extends TestCase
         $fecha = now('America/Bogota')->addDays(3)->toDateString();
 
         $this->webhook('PHONE-DEMO', 'wamid.1', 'app-secret', 'hola')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.1b', 'app-secret', '1')->assertOk();
         $this->webhook('PHONE-DEMO', 'wamid.2', 'app-secret', '1')->assertOk();
         $this->webhook('PHONE-DEMO', 'wamid.3', 'app-secret', '1')->assertOk();
         $this->webhook('PHONE-DEMO', 'wamid.4', 'app-secret', $fecha)->assertOk();
@@ -278,8 +295,16 @@ class WhatsAppMultiempresaTest extends TestCase
             $cuerpo = (string) ($request['text']['body'] ?? '');
 
             return str_contains($cuerpo, 'Barbería Demo')
-                && str_contains($cuerpo, 'Carlos')
                 && ! str_contains($cuerpo, 'Otro Negocio')
+                && ! str_contains($cuerpo, 'Lucía');
+        });
+
+        $this->webhook('PHONE-IDENT-DEMO', 'wamid.ident1b', 'app-secret', '1')->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Carlos')
                 && ! str_contains($cuerpo, 'Lucía');
         });
 
@@ -289,8 +314,16 @@ class WhatsAppMultiempresaTest extends TestCase
             $cuerpo = (string) ($request['text']['body'] ?? '');
 
             return str_contains($cuerpo, 'Otro Negocio')
-                && str_contains($cuerpo, 'Lucía')
                 && ! str_contains($cuerpo, 'Barbería Demo')
+                && ! str_contains($cuerpo, 'Carlos');
+        });
+
+        $this->webhook('PHONE-IDENT-OTRO', 'wamid.ident2b', 'app-secret', '1')->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Lucía')
                 && ! str_contains($cuerpo, 'Carlos');
         });
     }

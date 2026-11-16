@@ -31,23 +31,31 @@ class ReservaWhatsAppService
 
         $enReserva = in_array($paso, ['profesional', 'servicio', 'fecha', 'hora', 'nombre', 'confirmar'], true);
 
-        if ($this->quiereCancelar($palabra) && ! $enReserva) {
+        // Cancelación: opción numérica del menú o expresiones naturales.
+        if ($this->quiereCancelar($palabra, $paso === 'menu')) {
             return $this->iniciarCancelacion($telefono, $businessId, $clave);
         }
 
-        if (! $estado) {
+        // Volver al menú principal en cualquier momento.
+        if (in_array($palabra, ['menu', 'menú', '0', 'volver', 'atras', 'atrás', 'hola', 'reiniciar'], true)) {
+            return $this->menuPrincipal($businessId, $clave);
+        }
+
+        if (! $enReserva) {
             $respuestaCita = $this->gestionarRespuestaCita($telefono, $mensaje, $businessId);
 
             if ($respuestaCita !== null) {
                 return $respuestaCita;
             }
-        }
 
-        if (! $estado || in_array(mb_strtolower($mensaje), ['hola', 'menu', 'menú', 'reiniciar', 'cancelar'])) {
-            $estado = ['paso' => 'profesional', 'business_id' => $businessId];
-            Cache::put($clave, $estado, now()->addHours(2));
+            if ($this->quiereAgendar($palabra)) {
+                $estado = ['paso' => 'profesional', 'business_id' => $businessId];
+                Cache::put($clave, $estado, now()->addHours(2));
 
-            return $this->menuProfesionales($businessId);
+                return $this->listaProfesionales($businessId);
+            }
+
+            return $this->menuPrincipal($businessId, $clave);
         }
 
         switch ($estado['paso']) {
@@ -57,7 +65,7 @@ class ReservaWhatsAppService
                     ->orderBy('id')->get();
                 $seleccion = $this->elegir($items, $mensaje);
                 if (! $seleccion) {
-                    return $this->menuProfesionales($businessId);
+                    return $this->listaProfesionales($businessId);
                 }
 
                 $estado['profesional_id'] = $seleccion->id;
@@ -216,11 +224,35 @@ class ReservaWhatsAppService
     }
 
     /**
-     * Detección de intención de cancelación en lenguaje natural.
+     * Menú principal dinámico del negocio asociado al número.
      */
-    private function quiereCancelar(string $palabra): bool
+    private function menuPrincipal(?int $businessId, string $clave): string
     {
-        return str_contains($palabra, 'cancel');
+        Cache::put($clave, ['paso' => 'menu', 'business_id' => $businessId], now()->addHours(2));
+
+        $negocio = Business::find($businessId);
+        $saludo = $negocio !== null ? '¡Bienvenida a '.$negocio->name.'!' : '¡Bienvenida!';
+
+        return $saludo."\n1. Agendar cita\n2. Cancelar cita";
+    }
+
+    /**
+     * Detección de intención de agendamiento.
+     */
+    private function quiereAgendar(string $palabra): bool
+    {
+        return $palabra === '1'
+            || str_contains($palabra, 'agendar')
+            || str_contains($palabra, 'reserv');
+    }
+
+    /**
+     * Detección de intención de cancelación: opción del menú o
+     * expresiones naturales (p. ej. «quiero cancelar mi cita»).
+     */
+    private function quiereCancelar(string $palabra, bool $enMenu = false): bool
+    {
+        return str_contains($palabra, 'cancel') || ($enMenu && $palabra === '2');
     }
 
     /**
@@ -262,9 +294,7 @@ class ReservaWhatsAppService
     private function gestionarCancelacion(string $mensaje, string $palabra, ?int $businessId, array $estado, string $clave): string
     {
         if ($mensaje === '0' || in_array($palabra, ['menu', 'menú', 'volver', 'atras', 'atrás'], true)) {
-            Cache::forget($clave);
-
-            return $this->menuProfesionales($businessId);
+            return $this->menuPrincipal($businessId, $clave);
         }
 
         if (($estado['paso'] ?? '') === 'cancelar_eleccion') {
@@ -288,9 +318,7 @@ class ReservaWhatsAppService
         }
 
         if ($mensaje === '2') {
-            Cache::forget($clave);
-
-            return $this->menuProfesionales($businessId);
+            return $this->menuPrincipal($businessId, $clave);
         }
 
         if ($mensaje !== '1') {
@@ -342,7 +370,7 @@ class ReservaWhatsAppService
         )->implode("\n");
     }
 
-    private function menuProfesionales(?int $businessId): string
+    private function listaProfesionales(?int $businessId): string
     {
         $items = DB::table('professionals')->where('active', true)
             ->where('business_id', $businessId)
@@ -353,7 +381,7 @@ class ReservaWhatsAppService
 
         return $items->isEmpty()
             ? 'No hay profesionales disponibles.'
-            : $saludo."\nElige una profesional:\n".$this->numerar($items);
+            : "Elige una profesional:\n".$this->numerar($items)."\n0. Volver al menú principal";
     }
 
     private function menuServicios(int $profesionalId): string
