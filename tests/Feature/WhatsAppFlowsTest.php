@@ -250,4 +250,61 @@ class WhatsAppFlowsTest extends TestCase
         $this->assertSame('CANCELAR', $respuesta['screen']);
         $this->assertStringContainsString('No encontramos citas', $respuesta['data']['aviso']);
     }
+
+    public function test_flow_definition_matches_the_laravel_contract(): void
+    {
+        $flow = json_decode((string) file_get_contents(base_path('flow-reservas.json')), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame('7.3', $flow['version']);
+
+        $ids = collect($flow['screens'])->pluck('id')->all();
+        foreach (['APPOINTMENT', 'DETAILS', 'SUMMARY', 'SUCCESS', 'CANCELAR', 'CONFIRMAR_CANCELACION'] as $pantalla) {
+            $this->assertContains($pantalla, $ids);
+        }
+
+        $this->assertSame(['CONFIRMAR_CANCELACION'], $flow['routing_model']['CANCELAR']);
+        $this->assertSame(['SUCCESS'], $flow['routing_model']['CONFIRMAR_CANCELACION']);
+        $this->assertSame([], $flow['routing_model']['SUCCESS']);
+
+        // Contrato de intercambio: las acciones y campos coinciden con
+        // los que lee FlujoReservasService.
+        $payloads = [];
+        $recorrer = function ($nodo) use (&$recorrer, &$payloads) {
+            if (is_array($nodo)) {
+                foreach ($nodo as $clave => $valor) {
+                    if ($clave === 'payload' && is_array($valor)) {
+                        $payloads[] = $valor;
+                    }
+                    $recorrer($valor);
+                }
+            }
+        };
+        $recorrer($flow['screens']);
+
+        $permitidas = ['accion', 'profesional', 'servicio', 'fecha', 'hora', 'nombre', 'telefono', 'cita'];
+
+        foreach ($payloads as $payload) {
+            if (! isset($payload['accion'])) {
+                continue; // payloads de navegación/completado de Meta
+            }
+
+            foreach (array_keys($payload) as $clave) {
+                $this->assertContains($clave, $permitidas);
+            }
+        }
+
+        $acciones = collect($payloads)->pluck('accion')->filter()->unique()->all();
+        $this->assertContains('revisar', $acciones);
+        $this->assertContains('confirmar', $acciones);
+        $this->assertContains('cancelar', $acciones);
+        $this->assertContains('cancelar_seleccion', $acciones);
+        $this->assertContains('cancelar_confirmar', $acciones);
+        $this->assertContains('menu', $acciones);
+
+        $detalles = collect($flow['screens'])->firstWhere('id', 'DETAILS');
+        $this->assertArrayHasKey('telefono_remitente', $detalles['data']);
+
+        $cancelar = collect($flow['screens'])->firstWhere('id', 'CANCELAR');
+        $this->assertArrayHasKey('citas', $cancelar['data']);
+    }
 }
