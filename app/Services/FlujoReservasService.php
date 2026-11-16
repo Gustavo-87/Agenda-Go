@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Controllers\AppointmentController;
 use App\Models\Business;
+use App\Support\FormatoHora;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,7 +69,7 @@ class FlujoReservasService
             }
 
             $resumen = "{$prof->name} - {$serv->name}\n"
-                ."{$fecha} a las {$hora}\n"
+                ."{$fecha} a las ".FormatoHora::hora($hora)."\n"
                 ."Cliente: {$nombre}";
 
             $campos = [
@@ -100,7 +101,7 @@ class FlujoReservasService
                 $id = $respuesta->getData(true)['appointment_id'];
 
                 return $this->respuesta('SUCCESS', [
-                    'mensaje' => "Reserva #{$id} confirmada para {$fecha} a las {$hora}.",
+                    'mensaje' => 'Reserva #'.$id.' confirmada para '.$fecha.' a las '.FormatoHora::hora($hora).'.',
                 ]);
             } catch (ValidationException $e) {
                 return $this->respuesta('SUMMARY', [
@@ -205,7 +206,7 @@ class FlujoReservasService
             'fecha_maxima' => $fin->format('Y-m-d'),
             'fechas_no_disponibles' => $bloqueadas,
             'horarios' => array_map(
-                fn ($h) => ['id' => $h, 'title' => $h], $horarios
+                fn ($h) => ['id' => $h, 'title' => FormatoHora::hora($h)], $horarios
             ),
             'habilitar_horarios' => count($horarios) > 0,
             'aviso' => $aviso ?: 'Selecciona una profesional y un servicio.',

@@ -327,4 +327,62 @@ class WhatsAppMultiempresaTest extends TestCase
                 && ! str_contains($cuerpo, 'Carlos');
         });
     }
+
+    public function test_bot_times_use_12_hour_format_and_keep_internal_values(): void
+    {
+        Http::fake();
+
+        $business = Business::factory()->create([
+            'name' => 'Barbería Demo',
+            'slug' => 'barberia-demo-horas',
+            'whatsapp_phone_number_id' => 'PHONE-HORAS',
+            'active' => true,
+            'booking_min_notice_minutes' => 0,
+        ]);
+        $professional = Professional::create(['name' => 'Carlos', 'business_id' => $business->id]);
+        $service = Service::create([
+            'name' => 'Corte',
+            'duration_minutes' => 60,
+            'price' => 30000,
+            'professional_id' => $professional->id,
+            'business_id' => $business->id,
+        ]);
+        $fecha = now('America/Bogota')->addDays(3)->toDateString();
+
+        $this->webhook('PHONE-HORAS', 'wamid.h1', 'app-secret', 'hola')->assertOk();
+        $this->webhook('PHONE-HORAS', 'wamid.h2', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-HORAS', 'wamid.h3', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-HORAS', 'wamid.h4', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-HORAS', 'wamid.h5', 'app-secret', $fecha)->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Horarios disponibles')
+                && str_contains($cuerpo, '9:00 a. m.');
+        });
+
+        $this->webhook('PHONE-HORAS', 'wamid.h6', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-HORAS', 'wamid.h7', 'app-secret', 'Andrés')->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Confirma tu cita')
+                && str_contains($cuerpo, '9:00 a. m.');
+        });
+
+        $this->webhook('PHONE-HORAS', 'wamid.h8', 'app-secret', '1')->assertOk();
+
+        Http::assertSent(function ($request) {
+            return str_contains((string) ($request['text']['body'] ?? ''), 'hora: 9:00 a. m.');
+        });
+
+        // El almacenamiento y la selección interna permanecen en 24 horas.
+        $this->assertDatabaseHas('appointments', [
+            'business_id' => $business->id,
+            'starts_at' => "{$fecha} 09:00:00",
+            'status' => 'confirmed',
+        ]);
+    }
 }

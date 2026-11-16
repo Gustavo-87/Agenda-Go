@@ -104,14 +104,14 @@ class ReservaWhatsAppService
                 $estado['horas'] = $horas;
                 $estado['paso'] = 'hora';
                 $respuesta = "Horarios disponibles:\n"
-                    .$this->numerar($horas)
+                    .$this->numerar(array_map(fn ($h) => FormatoHora::hora($h), $horas))
                     ."\nResponde con el número del horario.";
                 break;
 
             case 'hora':
                 $indice = ctype_digit($mensaje) ? (int) $mensaje - 1 : -1;
                 if (! isset($estado['horas'][$indice])) {
-                    return "Selecciona un horario válido:\n".$this->numerar($estado['horas']);
+                    return "Selecciona un horario válido:\n".$this->numerar(array_map(fn ($h) => FormatoHora::hora($h), $estado['horas']));
                 }
 
                 $estado['hora'] = $estado['horas'][$indice];
@@ -128,7 +128,7 @@ class ReservaWhatsAppService
                 $estado['paso'] = 'confirmar';
                 $respuesta = "Confirma tu cita:\n"
                     ."Fecha: {$estado['fecha']}\n"
-                    ."Hora: {$estado['hora']}\n"
+                    .'Hora: '.FormatoHora::hora($estado['hora'])."\n"
                     ."Nombre: {$estado['nombre']}\n\n"
                     ."1. Confirmar\n2. Cancelar";
                 break;
@@ -159,7 +159,7 @@ class ReservaWhatsAppService
                     Cache::forget($clave);
 
                     return "¡Reserva confirmada! Tu número de cita es {$id}. "
-                        ."Fecha: {$estado['fecha']}, hora: {$estado['hora']}.";
+                        .'Fecha: '.$estado['fecha'].', hora: '.FormatoHora::hora($estado['hora']).'.';
                 } catch (ValidationException $e) {
                     $estado['paso'] = 'fecha';
                     Cache::put($clave, $estado, now()->addHours(2));
