@@ -48,3 +48,13 @@ Implementado en código (verificado con pruebas simuladas):
 
 Requiere acción en Meta (no ejecutada sin autorización):
 - Publicar/actualizar el Flow con las pantallas `CANCELAR` y `CONFIRMAR_CANCELACION`, el selector de teléfono de contacto y los campos `phone_number`/`phone_number_id`/`cita`; asociar el Flow al número del negocio.
+
+## Publicación del Flow (pendiente de autorización, 2026-11-16)
+
+`flow-reservas.json` actualizado localmente a la versión 7.3 con las pantallas APPOINTMENT (reserva), DETAILS (captura de teléfono con el remitente precargado y editable), SUMMARY (confirmación de reserva), CANCELAR (listado de citas del remitente), CONFIRMAR_CANCELACION (confirmación expresa) y SUCCESS (terminal); navegación y payloads validados contra `FlujoReservasService` por pruebas automatizadas.
+
+Pasos necesarios en Meta (no ejecutados):
+1. Meta Business → WhatsApp Manager → Flows → editar/crear el Flow y reemplazar la definición con `flow-reservas.json`.
+2. Apuntar la Data API al endpoint `/api/whatsapp/flows` con la clave pública/privada configurada.
+3. Publicar la nueva versión del Flow y asociarla al número del negocio.
+4. Probar con el número autorizado: reserva completa, captura de teléfono alterno y cancelación guiada.
