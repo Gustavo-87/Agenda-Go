@@ -250,4 +250,46 @@ class WhatsAppMultiempresaTest extends TestCase
 
         $this->assertDatabaseCount('whatsapp_messages', 0);
     }
+
+    public function test_bot_identity_and_catalog_follow_the_phone_number_business(): void
+    {
+        Http::fake();
+
+        $demo = Business::factory()->create([
+            'name' => 'Barbería Demo',
+            'slug' => 'barberia-demo',
+            'whatsapp_phone_number_id' => 'PHONE-IDENT-DEMO',
+            'active' => true,
+        ]);
+        $otro = Business::factory()->create([
+            'name' => 'Otro Negocio',
+            'slug' => 'otro-negocio',
+            'whatsapp_phone_number_id' => 'PHONE-IDENT-OTRO',
+            'active' => true,
+        ]);
+        Professional::create(['name' => 'Carlos', 'business_id' => $demo->id]);
+        Professional::create(['name' => 'Lucía', 'business_id' => $otro->id]);
+
+        $this->webhook('PHONE-IDENT-DEMO', 'wamid.ident1', 'app-secret', 'hola')->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Barbería Demo')
+                && str_contains($cuerpo, 'Carlos')
+                && ! str_contains($cuerpo, 'Otro Negocio')
+                && ! str_contains($cuerpo, 'Lucía');
+        });
+
+        $this->webhook('PHONE-IDENT-OTRO', 'wamid.ident2', 'app-secret', 'hola')->assertOk();
+
+        Http::assertSent(function ($request) {
+            $cuerpo = (string) ($request['text']['body'] ?? '');
+
+            return str_contains($cuerpo, 'Otro Negocio')
+                && str_contains($cuerpo, 'Lucía')
+                && ! str_contains($cuerpo, 'Barbería Demo')
+                && ! str_contains($cuerpo, 'Carlos');
+        });
+    }
 }

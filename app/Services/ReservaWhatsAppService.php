@@ -222,9 +222,12 @@ class ReservaWhatsAppService
             ->where('business_id', $businessId)
             ->orderBy('id')->pluck('name');
 
+        $negocio = Business::find($businessId);
+        $saludo = $negocio !== null ? '¡Bienvenida a '.$negocio->name.'!' : '¡Bienvenida!';
+
         return $items->isEmpty()
             ? 'No hay profesionales disponibles.'
-            : "¡Bienvenida a Viglam!\nElige una profesional:\n".$this->numerar($items);
+            : $saludo."\nElige una profesional:\n".$this->numerar($items);
     }
 
     private function menuServicios(int $profesionalId): string
