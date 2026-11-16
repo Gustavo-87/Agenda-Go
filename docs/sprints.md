@@ -180,6 +180,12 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 | PWA y notificaciones push | Parcialmente funcional (push real pendiente de VAPID/proveedor) |
 | Piloto comercial Viglam | Pendiente (acciones externas) |
 
+### Pruebas funcionales del motor de reservas (Barbería Demo, 2026-11-16)
+
+- Batería `tests/Feature/BarberiaDemoBookingTest.php` (6 pruebas) sobre el negocio sintético «Barbería Demo», con servicios reales de Laravel (`DisponibilidadService`, controlador de reservas, comando de expiración): configuración de profesionales/servicios/horarios, disponibilidad con jornadas partidas, descansos y duraciones (60/120 min), bloqueo de horarios ocupados, prevención de doble reserva y reservas simultáneas, ciclo completo (expiración, confirmación, reprogramación con detección de conflictos, cancelación con liberación) y aislamiento entre negocios.
+- Resultado: **sin defectos del motor**; las 3 expectativas inicialmente fallidas eran erróneas en las pruebas (y fueron corregidas tras verificar que el motor se comporta correctamente: solapamientos con descansos y reservas previas, y confirmación manual en modo manual). Viglam no fue modificado y no se enviaron mensajes reales.
+- Pendientes para la prueba con Meta: envíos reales de WhatsApp (invitaciones/recordatorios), webhook con número comercial verificado, aprobación de plantillas UTILITY para avisos fuera de la ventana de 24 h, mapeo de Phone Number ID por negocio y pruebas de concurrencia reales con varias instancias.
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
