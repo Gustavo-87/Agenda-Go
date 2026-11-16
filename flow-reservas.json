@@ -115,6 +115,10 @@
         "aviso": {
           "type": "string",
           "__example__": "Selecciona una profesional y un servicio."
+        },
+        "telefono_remitente": {
+          "type": "string",
+          "__example__": "573001112233"
         }
       },
       "layout": {
@@ -125,9 +129,36 @@
             "text": "Agendar cita"
           },
           {
+            "type": "TextBody",
+            "text": "Números detectado: ${data.telefono_remitente}. ¿Qué deseas hacer?"
+          },
+          {
             "type": "Form",
             "name": "reserva",
             "children": [
+              {
+                "type": "Dropdown",
+                "label": "¿Qué deseas hacer?",
+                "name": "objetivo",
+                "data-source": [
+                  {
+                    "id": "profesional",
+                    "title": "Agendar cita"
+                  },
+                  {
+                    "id": "cancelar",
+                    "title": "Cancelar cita"
+                  }
+                ],
+                "required": true,
+                "on-select-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "accion": "${form.objetivo}",
+                    "telefono": "${data.telefono_remitente}"
+                  }
+                }
+              },
               {
                 "type": "Dropdown",
                 "label": "Profesional",
@@ -208,31 +239,6 @@
                 }
               }
             ]
-          },
-          {
-            "type": "Form",
-            "name": "cancelar",
-            "children": [
-              {
-                "type": "TextBody",
-                "text": "¿Deseas cancelar una cita existente?"
-              },
-              {
-                "type": "Footer",
-                "label": "Cancelar cita",
-                "on-click-action": {
-                  "name": "navigate",
-                  "next": {
-                    "type": "screen",
-                    "name": "CANCELAR"
-                  },
-                  "payload": {
-                    "accion": "cancelar",
-                    "telefono": "${data.telefono_remitente}"
-                  }
-                }
-              }
-            ]
           }
         ]
       }
@@ -271,7 +277,7 @@
           },
           {
             "type": "TextBody",
-            "text": "Detectamos tu número de WhatsApp: ${data.telefono_remitente}. Confírmalo o escribe otro número de contacto."
+            "text": "Detectamos tu número de WhatsApp: ${data.telefono_remitente}. Confírmalo escribiéndolo o indica otro número de contacto."
           },
           {
             "type": "Form",
@@ -396,6 +402,10 @@
         "mensaje": {
           "type": "string",
           "__example__": "Tu cita está confirmada. ¡Te esperamos!"
+        },
+        "remitente": {
+          "type": "string",
+          "__example__": "573001112233"
         }
       },
       "layout": {
@@ -453,6 +463,14 @@
         "telefono_remitente": {
           "type": "string",
           "__example__": "573001112233"
+        },
+        "accion": {
+          "type": "string",
+          "__example__": "cancelar"
+        },
+        "telefono": {
+          "type": "string",
+          "__example__": "573001112233"
         }
       },
       "layout": {
@@ -474,7 +492,8 @@
                 "type": "TextInput",
                 "name": "telefono",
                 "label": "Teléfono de contacto (si reservaste con otro)",
-                "input-type": "phone"
+                "input-type": "phone",
+                "required": true
               },
               {
                 "type": "Dropdown",
@@ -491,31 +510,11 @@
                 "type": "Footer",
                 "label": "Continuar",
                 "on-click-action": {
-                  "name": "navigate",
-                  "next": {
-                    "type": "screen",
-                    "name": "CONFIRMAR_CANCELACION"
-                  },
+                  "name": "data_exchange",
                   "payload": {
                     "accion": "cancelar_seleccion",
                     "cita": "${form.cita}",
                     "telefono": "${form.telefono}"
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "type": "Form",
-            "name": "volver_menu",
-            "children": [
-              {
-                "type": "Footer",
-                "label": "Volver al menú principal",
-                "on-click-action": {
-                  "name": "data_exchange",
-                  "payload": {
-                    "accion": "menu"
                   }
                 }
               }
@@ -543,6 +542,10 @@
         "telefono": {
           "type": "string",
           "__example__": "573001112233"
+        },
+        "accion": {
+          "type": "string",
+          "__example__": "cancelar_confirmar"
         }
       },
       "layout": {
@@ -561,6 +564,10 @@
             "text": "${data.aviso}"
           },
           {
+            "type": "TextBody",
+            "text": "Usa Atrás para volver al menú principal sin cancelar."
+          },
+          {
             "type": "Form",
             "name": "confirmar_cancelacion",
             "children": [
@@ -573,22 +580,6 @@
                     "accion": "cancelar_confirmar",
                     "cita": "${data.cita}",
                     "telefono": "${data.telefono}"
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "type": "Form",
-            "name": "volver_menu",
-            "children": [
-              {
-                "type": "Footer",
-                "label": "Volver al menú principal",
-                "on-click-action": {
-                  "name": "data_exchange",
-                  "payload": {
-                    "accion": "menu"
                   }
                 }
               }

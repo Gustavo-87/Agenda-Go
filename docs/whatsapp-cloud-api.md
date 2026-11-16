@@ -58,3 +58,10 @@ Pasos necesarios en Meta (no ejecutados):
 2. Apuntar la Data API al endpoint `/api/whatsapp/flows` con la clave pública/privada configurada.
 3. Publicar la nueva versión del Flow y asociarla al número del negocio.
 4. Probar con el número autorizado: reserva completa, captura de teléfono alterno y cancelación guiada.
+
+### Corrección estructural del Flow (2026-11-16)
+
+- Un solo `Form` y un solo `Footer` por pantalla; acciones secundarias eliminadas (el regreso al menú se hace con «Atrás», acción `BACK` que el controlador resuelve a la pantalla de reserva).
+- Modelos `data` completos: `telefono_remitente` en APPOINTMENT, `accion`/`telefono` en CANCELAR, `accion` en CONFIRMAR_CANCELACION y `remitente` en SUCCESS (seguimiento).
+- Las pantallas que requieren datos calculados por Laravel usan `data_exchange` (selección de cita y confirmación de cancelación); `navigate` solo transporta campos declarados en el modelo destino.
+- Nota: la validación sintáctica y las pruebas automatizadas no garantizan la aceptación por Meta; la compatibilidad total debe confirmarse cargando el JSON en el editor de Flows.

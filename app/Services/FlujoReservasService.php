@@ -184,6 +184,8 @@ class FlujoReservasService
                     ? 'No encontramos citas próximas para cancelar.'
                     : 'Selecciona la cita que deseas cancelar.',
                 'telefono_remitente' => $this->remitente,
+                'accion' => $accion,
+                'telefono' => $telefono,
             ]);
         }
 
@@ -205,6 +207,8 @@ class FlujoReservasService
                 'cita' => (string) $cita->id,
                 'resumen' => FormatoHora::fechaHora($cita->starts_at).' — '.($cita->service?->name ?? 'Servicio'),
                 'aviso' => 'Confirma la cancelación. Esta acción libera el horario.',
+                'telefono' => $telefono,
+                'accion' => 'cancelar_seleccion',
             ]);
         }
 

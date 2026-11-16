@@ -301,10 +301,9 @@ class WhatsAppFlowsTest extends TestCase
         $acciones = collect($payloads)->pluck('accion')->filter()->unique()->all();
         $this->assertContains('revisar', $acciones);
         $this->assertContains('confirmar', $acciones);
-        $this->assertContains('cancelar', $acciones);
+        $this->assertStringContainsString('Cancelar cita', (string) json_encode($flow, JSON_THROW_ON_ERROR));
         $this->assertContains('cancelar_seleccion', $acciones);
         $this->assertContains('cancelar_confirmar', $acciones);
-        $this->assertContains('menu', $acciones);
 
         $detalles = collect($flow['screens'])->firstWhere('id', 'DETAILS');
         $this->assertArrayHasKey('telefono_remitente', $detalles['data']);
