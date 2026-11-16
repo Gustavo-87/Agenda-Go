@@ -36,3 +36,15 @@ Configuración requerida para la puesta en marcha (acción externa):
 2. Token permanente `SYSTEM_USER` con `whatsapp_business_management` y `whatsapp_business_messaging` (pendiente por el error #10 de la Messaging Account).
 3. Webhook apuntando a la URL pública estable con `WHATSAPP_VERIFY_TOKEN` registrado en Meta.
 4. Plantillas UTILITY aprobadas para avisos fuera de la ventana de 24 horas.
+
+## WhatsApp Flows — implementado y pendiente (2026-11-16)
+
+Implementado en código (verificado con pruebas simuladas):
+- Menú inicial «Agendar cita / Cancelar cita» por negocio (nombre dinámico del Phone Number ID).
+- Reserva por Flows con campos: nombre, teléfono de contacto (precargado con el número del remitente y reemplazable; el remitente original se conserva en `whatsapp_messages` y en los datos de respuesta), profesional, servicio, fecha, hora en formato 12 h (valores internos 24 h) y confirmación.
+- Disponibilidad reutilizada del motor: excluye horarios ocupados, descansos, festivos y fechas no disponibles.
+- Cancelación por Flows: listado de citas futuras del remitente por negocio, selección y confirmación expresa; la regla de cancelación vive en `Appointment::cancelarPorCliente()` compartida con el bot de texto.
+- Alternativa conversacional por texto conservada.
+
+Requiere acción en Meta (no ejecutada sin autorización):
+- Publicar/actualizar el Flow con las pantallas `CANCELAR` y `CONFIRMAR_CANCELACION`, el selector de teléfono de contacto y los campos `phone_number`/`phone_number_id`/`cita`; asociar el Flow al número del negocio.
