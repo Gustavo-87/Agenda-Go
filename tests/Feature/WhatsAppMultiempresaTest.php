@@ -39,7 +39,7 @@ class WhatsAppMultiempresaTest extends TestCase
         return [$business, $professional];
     }
 
-    private function webhook(?string $phoneId, string $waId, string $secret = 'app-secret'): TestResponse
+    private function webhook(?string $phoneId, string $waId, string $secret = 'app-secret', string $texto = 'hola'): TestResponse
     {
         config(['services.whatsapp.app_secret' => $secret]);
 
@@ -54,7 +54,7 @@ class WhatsAppMultiempresaTest extends TestCase
                             'id' => $waId,
                             'from' => '3001112233',
                             'type' => 'text',
-                            'text' => ['body' => 'hola'],
+                            'text' => ['body' => $texto],
                         ]],
                     ],
                 ]],
@@ -167,5 +167,87 @@ class WhatsAppMultiempresaTest extends TestCase
             'direction' => 'outbound',
             'status' => 'sent',
         ]);
+    }
+
+    public function test_unknown_phone_numbers_do_not_use_a_global_default_in_production(): void
+    {
+        Http::fake();
+        config(['services.reservas.business_slug' => 'canal-global']);
+        $this->negocioConProfesional('canal-global', 'Stefania');
+
+        $this->app->detectEnvironment(fn () => 'production');
+
+        $this->webhook('DESCONOCIDO', 'wamid.prod', 'app-secret', 'hola')->assertOk();
+
+        Http::assertNothingSent();
+        $this->assertDatabaseHas('whatsapp_messages', [
+            'wa_message_id' => 'wamid.prod',
+            'business_id' => null,
+            'status' => 'ignored',
+        ]);
+    }
+
+    public function test_full_booking_conversation_runs_per_phone_number_for_barberia_demo(): void
+    {
+        Http::fake();
+
+        // Barbería Demo con su propio número; no depende del canal global.
+        config(['services.reservas.business_slug' => 'otro-canal']);
+        $business = Business::factory()->create([
+            'slug' => 'barberia-demo',
+            'name' => 'Barbería Demo',
+            'whatsapp_phone_number_id' => 'PHONE-DEMO',
+            'active' => true,
+            'booking_min_notice_minutes' => 0,
+        ]);
+        $professional = Professional::create(['name' => 'Carlos', 'business_id' => $business->id]);
+        $service = Service::create([
+            'name' => 'Corte',
+            'duration_minutes' => 60,
+            'price' => 30000,
+            'professional_id' => $professional->id,
+            'business_id' => $business->id,
+        ]);
+        $fecha = now('America/Bogota')->addDays(3)->toDateString();
+
+        $this->webhook('PHONE-DEMO', 'wamid.1', 'app-secret', 'hola')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.2', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.3', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.4', 'app-secret', $fecha)->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.5', 'app-secret', '1')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.6', 'app-secret', 'Andrés')->assertOk();
+        $this->webhook('PHONE-DEMO', 'wamid.7', 'app-secret', '1')->assertOk();
+
+        $this->assertDatabaseHas('appointments', [
+            'business_id' => $business->id,
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'customer_name' => 'Andrés',
+            'status' => 'confirmed',
+        ]);
+
+        Http::assertSent(function ($request) {
+            return str_contains((string) ($request['text']['body'] ?? ''), 'confirmada');
+        });
+
+        // Cancelación por respuesta del cliente.
+        $this->webhook('PHONE-DEMO', 'wamid.8', 'app-secret', 'cancelar')->assertOk();
+
+        $this->assertDatabaseHas('appointments', [
+            'business_id' => $business->id,
+            'status' => 'cancelled',
+        ]);
+    }
+
+    public function test_webhook_rejects_invalid_signatures(): void
+    {
+        config(['services.whatsapp.app_secret' => 'app-secret']);
+
+        $this->call('POST', '/api/webhooks/whatsapp', [], [], [], [
+            'HTTP_X_Hub_Signature_256' => 'sha256=firma-invalida',
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode(['object' => 'whatsapp_business_account']))->assertStatus(403);
+
+        $this->assertDatabaseCount('whatsapp_messages', 0);
     }
 }
