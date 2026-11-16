@@ -53,7 +53,7 @@ class BusinessIsolationTest extends TestCase
             'service_id' => $serviceB->id,
             'customer_name' => 'Cliente',
             'customer_phone' => '3000000000',
-            'starts_at' => '2026-11-16 09:00:00',
+            'starts_at' => now('America/Bogota')->addDays(3)->format('Y-m-d').' 09:00:00',
         ])->assertStatus(422);
     }
 
@@ -65,7 +65,7 @@ class BusinessIsolationTest extends TestCase
 
         [$professionalB, $serviceB] = $this->professionalWithService($businessB, 'Laura');
 
-        $this->getJson("/api/availability?professional_id={$professionalB->id}&service_id={$serviceB->id}&date=2026-11-16")
+        $this->getJson("/api/availability?professional_id={$professionalB->id}&service_id={$serviceB->id}&date=".now('America/Bogota')->addDays(3)->toDateString())
             ->assertStatus(422);
 
         $this->postJson('/api/appointments', [
@@ -73,7 +73,7 @@ class BusinessIsolationTest extends TestCase
             'service_id' => $serviceB->id,
             'customer_name' => 'Cliente',
             'customer_phone' => '3000000000',
-            'starts_at' => '2026-11-16 09:00:00',
+            'starts_at' => now('America/Bogota')->addDays(3)->format('Y-m-d').' 09:00:00',
         ])->assertStatus(422);
 
         $this->assertDatabaseCount('appointments', 0);
@@ -93,7 +93,7 @@ class BusinessIsolationTest extends TestCase
             'service_id' => $service->id,
             'customer_name' => 'Cliente Viglam',
             'customer_phone' => '3000000000',
-            'starts_at' => '2026-11-16 09:00:00',
+            'starts_at' => now('America/Bogota')->addDays(3)->format('Y-m-d').' 09:00:00',
         ])->assertStatus(201);
 
         $this->assertDatabaseHas('appointments', [

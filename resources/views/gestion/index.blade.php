@@ -4,7 +4,18 @@
         <p class="text-sm text-gray-500 mt-0.5">Profesionales, servicios, horarios, excepciones y festivos.</p>
     </x-slot>
 
-    <div class="py-6" x-data="{ tab: 'profesionales' }">
+    <div class="py-6" x-data="{
+            tab: {!! \Illuminate\Support\Js::from(request()->query('tab', 'profesionales')) !!},
+            profesional: {!! \Illuminate\Support\Js::from((string) old('professional_id', (string) request()->query('profesional', ''))) !!},
+            dia: {!! \Illuminate\Support\Js::from((string) old('weekday', (string) request()->query('dia', ''))) !!},
+            sync() {
+                const params = new URLSearchParams();
+                params.set('tab', this.tab);
+                if (this.profesional) { params.set('profesional', this.profesional); }
+                if (this.dia !== '') { params.set('dia', this.dia); }
+                history.replaceState(null, '', '/gestion?' + params.toString());
+            }
+        }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             @if ($negocio === null)
@@ -25,7 +36,7 @@
                 <!-- Pestañas -->
                 <div class="flex flex-wrap gap-2">
                     @foreach (['profesionales' => 'Profesionales', 'servicios' => 'Servicios', 'horarios' => 'Horarios', 'excepciones' => 'Excepciones', 'festivos' => 'Festivos'] as $key => $label)
-                        <button type="button" @click="tab = '{{ $key }}'"
+                        <button type="button" @click="tab = '{{ $key }}'; sync()"
                             :class="tab === '{{ $key }}' ? 'bg-petrol text-white' : 'bg-white text-petrol hover:bg-warm-100'"
                             class="px-4 py-2 rounded-xl text-sm font-semibold border border-warm-200 shadow-sm transition">
                             {{ $label }}
@@ -144,7 +155,7 @@
                         <form method="POST" action="{{ route('services.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6">
                             @csrf
                             <x-text-input name="name" placeholder="Servicio" class="w-full" required />
-                            <select name="professional_id" required class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
+                            <select name="professional_id" required x-model="profesional" @change="sync()" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
                                 @foreach ($profesionales as $profesional)
                                     <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
                                 @endforeach
@@ -225,26 +236,43 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Jornadas y descansos</h3>
 
-                        <form method="POST" action="{{ route('schedules.store', $profesionales->first()?->id ?? 0) }}" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-6">
+                        <form method="POST" action="{{ route('schedules.store', $profesionales->first()?->id ?? 0) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
                             @csrf
-                            <select name="professional_id" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" onchange="this.form.action = '/professionals/' + this.value + '/schedules'">
-                                @foreach ($profesionales as $profesional)
-                                    <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
-                                @endforeach
-                            </select>
-                            <select name="weekday" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
-                                @foreach (['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $indice => $dia)
-                                    <option value="{{ $indice }}">{{ $dia }}</option>
-                                @endforeach
-                            </select>
-                            <x-text-input name="start_time" type="time" class="w-full" required />
-                            <x-text-input name="end_time" type="time" class="w-full" required />
-                            <label class="flex items-center gap-2 text-sm text-gray-600">
-                                <input type="hidden" name="is_break" value="0">
-                                <input type="checkbox" name="is_break" value="1" class="rounded border-warm-300 text-turquoise-600 focus:ring-turquoise-500">
-                                Descanso
-                            </label>
-                            <x-primary-button class="justify-center">Agregar</x-primary-button>
+                            <div>
+                                <x-input-label value="Profesional" />
+                                <select name="professional_id" x-model="profesional" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500"
+                                    @change="sync(); this.form.action = '/professionals/' + this.value + '/schedules'">
+                                    @foreach ($profesionales as $profesional)
+                                        <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label value="Día de la semana" />
+                                <select name="weekday" x-model="dia" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" @change="sync()">
+                                    @foreach (['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $indice => $dia)
+                                        <option value="{{ $indice }}">{{ $dia }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label value="Hora de inicio" />
+                                <x-text-input name="start_time" type="time" class="w-full mt-1" required />
+                            </div>
+                            <div>
+                                <x-input-label value="Hora de finalización" />
+                                <x-text-input name="end_time" type="time" class="w-full mt-1" required />
+                            </div>
+                            <div class="flex items-end">
+                                <label class="flex items-center gap-2 text-sm text-gray-600">
+                                    <input type="hidden" name="is_break" value="0">
+                                    <input type="checkbox" name="is_break" value="1" class="rounded border-warm-300 text-turquoise-600 focus:ring-turquoise-500">
+                                    Descanso
+                                </label>
+                            </div>
+                            <div class="flex items-end">
+                                <x-primary-button class="justify-center">Agregar</x-primary-button>
+                            </div>
                         </form>
 
                         @if ($profesionales->isEmpty())
@@ -284,7 +312,7 @@
 
                         <form method="POST" action="{{ route('exceptions.store', $profesionales->first()?->id ?? 0) }}" class="grid grid-cols-1 sm:grid-cols-7 gap-3 mb-6">
                             @csrf
-                            <select name="professional_id" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" onchange="this.form.action = '/professionals/' + this.value + '/exceptions'">
+                            <select name="professional_id" x-model="profesional" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" @change="sync(); this.form.action = '/professionals/' + this.value + '/exceptions'">
                                 @foreach ($profesionales as $profesional)
                                     <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
                                 @endforeach

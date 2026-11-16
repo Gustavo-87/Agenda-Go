@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Professional;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -320,6 +321,83 @@ class WebInterfaceTest extends TestCase
             ->get('/agenda?date=2026-11-16')
             ->assertOk()
             ->assertSee('lunes, 16 de noviembre');
+    }
+
+    public function test_schedule_actions_keep_the_active_tab(): void
+    {
+        $business = Business::factory()->create();
+        $admin = $this->adminOf($business);
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        $origen = '/gestion?tab=horarios&profesional='.$professional->id.'&dia=1';
+
+        $this->actingAs($admin)
+            ->from($origen)
+            ->post("/professionals/{$professional->id}/schedules", [
+                'weekday' => 1,
+                'start_time' => '09:00',
+                'end_time' => '13:00',
+            ])
+            ->assertRedirect($origen)
+            ->assertSessionHas('success');
+
+        $schedule = WorkSchedule::firstOrFail();
+
+        $this->actingAs($admin)
+            ->from($origen)
+            ->delete("/schedules/{$schedule->id}")
+            ->assertRedirect($origen);
+
+        $this->actingAs($admin)
+            ->from('/gestion?tab=festivos')
+            ->post("/businesses/{$business->id}/holidays", ['date' => '2026-12-08'])
+            ->assertRedirect('/gestion?tab=festivos');
+
+        $this->actingAs($admin)
+            ->from('/gestion?tab=servicios')
+            ->post("/businesses/{$business->id}/services", [
+                'name' => 'Semipermanente',
+                'duration_minutes' => 60,
+                'price' => 50000,
+                'professional_id' => $professional->id,
+            ])
+            ->assertRedirect('/gestion?tab=servicios');
+    }
+
+    public function test_horarios_tab_renders_labels_and_remembers_selection(): void
+    {
+        $business = Business::factory()->create();
+        $admin = $this->adminOf($business);
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+
+        $this->actingAs($admin)
+            ->get('/gestion?tab=horarios&profesional='.$professional->id.'&dia=1')
+            ->assertOk()
+            ->assertSee("tab: 'horarios'", false)
+            ->assertSee("profesional: '".$professional->id."'", false)
+            ->assertSee("dia: '1'", false)
+            ->assertSee('Profesional')
+            ->assertSee('Día de la semana')
+            ->assertSee('Hora de inicio')
+            ->assertSee('Hora de finalización')
+            ->assertSee('Descanso');
+    }
+
+    public function test_management_screen_keeps_responsive_layout(): void
+    {
+        $business = Business::factory()->create();
+        $professional = Professional::create(['name' => 'Stefania', 'business_id' => $business->id]);
+        WorkSchedule::create([
+            'professional_id' => $professional->id,
+            'weekday' => 0,
+            'start_time' => '09:00',
+            'end_time' => '13:00',
+        ]);
+
+        $this->actingAs($this->adminOf($business))
+            ->get('/gestion')
+            ->assertOk()
+            ->assertSee('grid-cols-1 sm:grid-cols-2 lg:grid-cols-6', false)
+            ->assertSee('overflow-x-auto');
     }
 
     public function test_forms_render_submit_buttons(): void
