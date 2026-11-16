@@ -271,6 +271,49 @@ class WhatsAppFlowsTest extends TestCase
         $this->assertSame(['SUCCESS'], $flow['routing_model']['CONFIRMAR_CANCELACION']);
         $this->assertSame([], $flow['routing_model']['SUCCESS']);
 
+        // Restricciones estructurales de Meta: un solo Form y un solo
+        // Footer por pantalla.
+        foreach ($flow['screens'] as $pantalla) {
+            $formularios = array_filter($pantalla['layout']['children'], fn ($hijo) => ($hijo['type'] ?? '') === 'Form');
+            $this->assertLessThanOrEqual(1, count($formularios), $pantalla['id']);
+
+            $footers = 0;
+            array_walk_recursive($pantalla['layout'], function ($valor, $clave) use (&$footers) {
+                if ($clave === 'type' && $valor === 'Footer') {
+                    $footers++;
+                }
+            });
+            $this->assertLessThanOrEqual(1, $footers, $pantalla['id']);
+        }
+
+        // Los modelos data declaran los campos exigidos por Meta.
+        $modelos = collect($flow['screens'])->keyBy('id');
+        $this->assertArrayHasKey('telefono_remitente', $modelos['APPOINTMENT']['data']);
+        $this->assertArrayHasKey('accion', $modelos['CANCELAR']['data']);
+        $this->assertArrayHasKey('telefono', $modelos['CANCELAR']['data']);
+        $this->assertArrayHasKey('accion', $modelos['CONFIRMAR_CANCELACION']['data']);
+
+        // Los payloads navigate contienen todos los campos del modelo
+        // de la pantalla destino y solo campos declarados en él.
+        foreach ($flow['screens'] as $pantalla) {
+            $serializadoPantalla = json_encode($pantalla['layout'], JSON_THROW_ON_ERROR);
+            preg_match_all('/"name": "navigate", "next": \{"type": "screen", "name": "([A-Z_]+)"\}, "payload": \{(.*?)\}\}\}/', $serializadoPantalla, $coincidencias, PREG_SET_ORDER);
+
+            foreach ($coincidencias as $coincidencia) {
+                $destino = $modelos[$coincidencia[1]]['data'] ?? [];
+                preg_match_all('/"([a-z_]+)":/', $coincidencia[2], $claves);
+                $enviadas = $claves[1];
+
+                foreach ($enviadas as $clave) {
+                    $this->assertArrayHasKey($clave, $destino, $pantalla['id'].' → '.$coincidencia[1]);
+                }
+
+                foreach (array_keys($destino) as $campo) {
+                    $this->assertContains($campo, $enviadas, $pantalla['id'].' → '.$coincidencia[1]);
+                }
+            }
+        }
+
         // Contrato de intercambio: las acciones y campos coinciden con
         // los que lee FlujoReservasService.
         $payloads = [];
