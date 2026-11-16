@@ -65,18 +65,60 @@ class ProfessionalController extends Controller
 
         $professionalIds = $business?->professionals()->pluck('id') ?? collect();
 
+        $q = trim((string) $request->query('q', ''));
+        $estado = (string) $request->query('estado', 'todos');
+        $profesionalFiltro = $request->query('professional_id');
+
+        $profesionales = $business?->professionals()->orderBy('name')->get() ?? collect();
+        $servicios = $business?->services()->orderBy('name')->get() ?? collect();
+
+        if ($q !== '') {
+            $profesionales = $profesionales->filter(
+                fn ($item) => str_contains(mb_strtolower($item->name), mb_strtolower($q))
+                    || str_contains((string) $item->phone, $q)
+            )->values();
+
+            $servicios = $servicios->filter(
+                fn ($item) => str_contains(mb_strtolower($item->name), mb_strtolower($q))
+            )->values();
+        }
+
+        if (in_array($estado, ['active', 'inactive'], true)) {
+            $servicios = $servicios->filter(
+                fn ($item) => (bool) $item->active === ($estado === 'active')
+            )->values();
+        }
+
+        $horarios = WorkSchedule::whereIn('professional_id', $professionalIds)
+            ->when($profesionalFiltro, fn ($query) => $query->where('professional_id', (int) $profesionalFiltro))
+            ->get()->groupBy('professional_id');
+
+        $excepciones = ScheduleException::whereIn('professional_id', $professionalIds)
+            ->when($profesionalFiltro, fn ($query) => $query->where('professional_id', (int) $profesionalFiltro))
+            ->orderBy('starts_on')->get();
+
+        $festivos = $business?->holidays()->orderBy('date')->get() ?? collect();
+
+        if ($q !== '') {
+            $festivos = $festivos->filter(
+                fn ($item) => str_contains(mb_strtolower((string) $item->name), mb_strtolower($q))
+                    || str_contains((string) $item->date, $q)
+            )->values();
+        }
+
         return view('gestion.index', [
             'negocio' => $business,
-            'profesionales' => $business?->professionals()->orderBy('name')->get() ?? collect(),
+            'q' => $q,
+            'estado' => $estado,
+            'profesionalFiltro' => $profesionalFiltro,
+            'profesionales' => $profesionales,
             'usuarios' => $business?->users()->orderBy('name')->get() ?? collect(),
             'invitaciones' => $business === null ? collect() : Invitation::where('business_id', $business->id)
                 ->where('role', 'professional')->whereNull('accepted_at')->orderByDesc('id')->get(),
-            'servicios' => $business?->services()->orderBy('name')->get() ?? collect(),
-            'horarios' => WorkSchedule::whereIn('professional_id', $professionalIds)
-                ->get()->groupBy('professional_id'),
-            'excepciones' => ScheduleException::whereIn('professional_id', $professionalIds)
-                ->orderBy('starts_on')->get()->groupBy('professional_id'),
-            'festivos' => $business?->holidays()->orderBy('date')->get() ?? collect(),
+            'servicios' => $servicios,
+            'horarios' => $horarios,
+            'excepciones' => $excepciones,
+            'festivos' => $festivos,
             'negocios' => $user->isSuperAdmin() ? Business::orderBy('name')->get() : collect(),
         ]);
     }
