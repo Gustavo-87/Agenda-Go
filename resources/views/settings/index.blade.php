@@ -87,7 +87,7 @@
                                     @method('DELETE')
                                     <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold border {{ $horario->is_break ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-turquoise-100 border-turquoise-100 text-turquoise-700' }} hover:opacity-80">
                                         {{ ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$horario->weekday] }}
-                                        {{ substr($horario->start_time, 0, 5) }}–{{ substr($horario->end_time, 0, 5) }}
+                                        {{ \App\Support\FormatoHora::hora($horario->start_time) }}–{{ \App\Support\FormatoHora::hora($horario->end_time) }}
                                         {{ $horario->is_break ? '· descanso' : '' }} ✕
                                     </button>
                                 </form>

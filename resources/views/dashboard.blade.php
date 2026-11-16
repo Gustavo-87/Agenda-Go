@@ -135,7 +135,7 @@
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p class="text-sm font-semibold text-petrol truncate">
-                                                {{ \Carbon\Carbon::parse($cita->starts_at)->format('d/m H:i') }} · {{ $cita->service?->name ?? 'Servicio' }}
+                                                {{ \App\Support\FormatoHora::fechaHora($cita->starts_at) }} · {{ $cita->service?->name ?? 'Servicio' }}
                                             </p>
                                             <p class="text-xs text-gray-500 truncate">
                                                 {{ $cita->customer_name }} · {{ $cita->professional?->name ?? '' }}

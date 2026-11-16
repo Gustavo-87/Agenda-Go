@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\AppointmentStatus;
 use App\Jobs\EnviarNotificacionWhatsApp;
 use App\Models\Appointment;
+use App\Support\FormatoHora;
 use Illuminate\Console\Command;
 
 class SendAppointmentReminders extends Command
@@ -37,7 +38,7 @@ class SendAppointmentReminders extends Command
         foreach ($citas as $cita) {
             EnviarNotificacionWhatsApp::dispatch(
                 $cita->customer_phone,
-                'Recordatorio: tu cita es el '.$cita->starts_at.'. Si no puedes asistir, avísanos con anticipación.',
+                'Recordatorio: tu cita es el '.FormatoHora::fechaHora($cita->starts_at).'. Si no puedes asistir, avísanos con anticipación.',
                 $cita->business_id
             );
 

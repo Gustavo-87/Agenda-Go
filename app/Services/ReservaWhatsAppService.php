@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Controllers\AppointmentController;
 use App\Models\Appointment;
 use App\Models\Business;
+use App\Support\FormatoHora;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -187,17 +188,17 @@ class ReservaWhatsAppService
 
         if ($confirmar) {
             if ($cita->status !== 'pending') {
-                return 'Tu cita del '.$cita->starts_at.' ya está confirmada. ¡Te esperamos!';
+                return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' ya está confirmada. ¡Te esperamos!';
             }
 
             $cita->update(['status' => 'confirmed', 'pending_expires_at' => null]);
 
-            return '¡Cita confirmada! Te esperamos el '.$cita->starts_at.'.';
+            return '¡Cita confirmada! Te esperamos el '.FormatoHora::fechaHora($cita->starts_at).'.';
         }
 
         $cita->update(['status' => 'cancelled', 'pending_expires_at' => null]);
 
-        return 'Tu cita del '.$cita->starts_at.' fue cancelada.';
+        return 'Tu cita del '.FormatoHora::fechaHora($cita->starts_at).' fue cancelada.';
     }
 
     private function elegir($items, string $mensaje)

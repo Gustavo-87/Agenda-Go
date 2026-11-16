@@ -69,7 +69,7 @@
                             <div class="mt-2 space-y-1.5">
                                 @forelse ($citasDia as $cita)
                                     <div class="rounded-xl bg-warm-100 border border-warm-200 px-2 py-1.5">
-                                        <div class="text-xs font-bold text-petrol">{{ substr($cita->starts_at, 11, 5) }} · {{ \Illuminate\Support\Str::limit($cita->customer_name, 14) }}</div>
+                                        <div class="text-xs font-bold text-petrol">{{ \App\Support\FormatoHora::hora($cita->starts_at) }} · {{ \Illuminate\Support\Str::limit($cita->customer_name, 14) }}</div>
                                         <x-badge :status="$cita->status" class="mt-1 scale-90 origin-left" />
                                     </div>
                                 @empty
@@ -101,7 +101,7 @@
                                 <tbody class="divide-y divide-warm-100">
                                     @foreach ($appointments as $appointment)
                                         <tr class="hover:bg-warm-50">
-                                            <td class="py-3 px-5 font-bold text-petrol">{{ substr($appointment->starts_at, 11, 5) }}</td>
+                                            <td class="py-3 px-5 font-bold text-petrol">{{ \App\Support\FormatoHora::hora($appointment->starts_at) }}</td>
                                             <td class="py-3 px-5">{{ $appointment->customer_name }}</td>
                                             <td class="py-3 px-5 hidden md:table-cell">{{ $appointment->professional?->name }}</td>
                                             <td class="py-3 px-5 hidden md:table-cell">{{ $appointment->service?->name }}</td>

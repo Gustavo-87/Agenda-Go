@@ -67,7 +67,7 @@
                                 <tbody class="divide-y divide-warm-100">
                                     @foreach ($historial as $cita)
                                         <tr>
-                                            <td class="py-3 px-4">{{ $cita->starts_at }}</td>
+                                            <td class="py-3 px-4">{{ \App\Support\FormatoHora::fechaHora($cita->starts_at) }}</td>
                                             <td class="py-3 px-4">{{ $cita->professional?->name }}</td>
                                             <td class="py-3 px-4">{{ $cita->service?->name }}</td>
                                             <td class="py-3 px-4"><x-badge :status="$cita->status" /></td>

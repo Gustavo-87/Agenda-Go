@@ -82,7 +82,7 @@
                                     <tbody class="divide-y divide-warm-100">
                                         @foreach ($citas as $cita)
                                             <tr>
-                                                <td class="py-3 px-4">{{ $cita->starts_at }}</td>
+                                                <td class="py-3 px-4">{{ \App\Support\FormatoHora::fechaHora($cita->starts_at) }}</td>
                                                 <td class="py-3 px-4 hidden md:table-cell">{{ $cita->professional_name }}</td>
                                                 <td class="py-3 px-4 hidden md:table-cell">{{ $cita->service_name }}</td>
                                                 <td class="py-3 px-4">{{ $cita->customer_name }}</td>

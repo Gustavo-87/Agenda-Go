@@ -49,10 +49,11 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Profesionales</h3>
 
-                        <form method="POST" action="{{ route('professionals.store') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+                        <h4 class="text-sm font-bold text-petrol mb-2">Agregar profesional</h4>
+                        <form method="POST" action="{{ route('professionals.store') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
                             @csrf
-                            <x-text-input name="name" placeholder="Nombre" class="w-full" required />
-                            <x-text-input name="phone" placeholder="Teléfono (opcional)" class="w-full" />
+                            <div><x-input-label value="Nombre *" /><x-text-input name="name" class="w-full mt-1" required /></div>
+                            <div><x-input-label value="Teléfono" /><x-text-input name="phone" class="w-full mt-1" /></div>
                             <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Agregar</x-primary-button>
                             <div class="text-xs text-gray-500 self-center">Máximo 5 profesionales activos por negocio.</div>
                         </form>
@@ -86,6 +87,7 @@
                             </div>
                         @endif
 
+                        <h4 class="text-sm font-bold text-petrol mb-2">Listado de profesionales</h4>
                         @if ($profesionales->isEmpty())
                             <x-empty-state icon="users" title="Sin profesionales" message="Agrega la primera profesional para comenzar a recibir reservas." />
                         @else
@@ -114,8 +116,8 @@
                                                         <form method="POST" action="{{ route('professionals.update', $profesional) }}" class="flex flex-wrap items-center gap-2">
                                                             @csrf
                                                             @method('PATCH')
-                                                            <x-text-input name="name" :value="$profesional->name" class="w-32" required />
-                                                            <x-text-input name="phone" :value="$profesional->phone" class="w-28" />
+                                                            <span class="flex flex-col"><span class="text-[10px] text-gray-400">Nombre</span><x-text-input name="name" :value="$profesional->name" class="w-32" required /></span>
+                                                            <span class="flex flex-col"><span class="text-[10px] text-gray-400">Teléfono</span><x-text-input name="phone" :value="$profesional->phone" class="w-28" /></span>
                                                             <x-secondary-button type="submit">Guardar</x-secondary-button>
                                                         </form>
                                                         <form method="POST" action="{{ route('professionals.toggle', $profesional) }}">
@@ -152,19 +154,22 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Servicios</h3>
 
-                        <form method="POST" action="{{ route('services.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6">
+                        <h4 class="text-sm font-bold text-petrol mb-2">Agregar servicio</h4>
+                        <form method="POST" action="{{ route('services.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                             @csrf
-                            <x-text-input name="name" placeholder="Servicio" class="w-full" required />
-                            <select name="professional_id" required x-model="profesional" @change="sync()" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
+                            <div><x-input-label value="Servicio *" /><x-text-input name="name" class="w-full mt-1" required /></div>
+                            <div><x-input-label value="Profesional *" /><select name="professional_id" required x-model="profesional" @change="sync()" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
                                 @foreach ($profesionales as $profesional)
                                     <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
                                 @endforeach
                             </select>
-                            <x-text-input name="duration_minutes" type="number" placeholder="Minutos" class="w-full" required />
-                            <x-text-input name="price" type="number" placeholder="Precio" class="w-full" required />
+                            </select></div>
+                        <div><x-input-label value="Duración (minutos) *" /><x-text-input name="duration_minutes" type="number" class="w-full mt-1" required /></div>
+                            <div><x-input-label value="Precio (COP) *" /><x-text-input name="price" type="number" class="w-full mt-1" required /></div>
                             <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Agregar</x-primary-button>
                         </form>
 
+                        <h4 class="text-sm font-bold text-petrol mb-2">Listado de servicios</h4>
                         @if ($servicios->isEmpty())
                             <x-empty-state icon="clipboard" title="Sin servicios" message="Crea el catálogo de servicios de tu negocio." />
                         @else
@@ -190,7 +195,7 @@
                                         @foreach ($servicios as $servicio)
                                             <tr>
                                                 <td class="py-3 px-4">
-                                                    <x-text-input name="name" form="servicio-{{ $servicio->id }}" :value="$servicio->name" class="w-36" required />
+                                                    <span class="flex flex-col"><span class="text-[10px] text-gray-400">Servicio</span><x-text-input name="name" form="servicio-{{ $servicio->id }}" :value="$servicio->name" class="w-36" required /></span>
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     <select name="professional_id" form="servicio-{{ $servicio->id }}" class="border-warm-300 rounded-xl text-xs focus:border-turquoise-500 focus:ring-turquoise-500 w-32">
@@ -200,10 +205,10 @@
                                                     </select>
                                                 </td>
                                                 <td class="py-3 px-4">
-                                                    <x-text-input name="duration_minutes" form="servicio-{{ $servicio->id }}" type="number" :value="$servicio->duration_minutes" class="w-20" required />
+                                                    <span class="flex flex-col"><span class="text-[10px] text-gray-400">Min.</span><x-text-input name="duration_minutes" form="servicio-{{ $servicio->id }}" type="number" :value="$servicio->duration_minutes" class="w-20" required /></span>
                                                 </td>
                                                 <td class="py-3 px-4">
-                                                    <x-text-input name="price" form="servicio-{{ $servicio->id }}" type="number" :value="$servicio->price" class="w-24" required />
+                                                    <span class="flex flex-col"><span class="text-[10px] text-gray-400">Precio (COP)</span><x-text-input name="price" form="servicio-{{ $servicio->id }}" type="number" :value="$servicio->price" class="w-24" required /></span>
                                                 </td>
                                                 <td class="py-3 px-4">
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $servicio->active ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600' }}">
@@ -292,7 +297,7 @@
                                                     @method('DELETE')
                                                     <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-semibold border {{ $horario->is_break ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-turquoise-100 border-turquoise-100 text-turquoise-700' }} hover:opacity-80">
                                                         {{ ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][$horario->weekday] }}
-                                                        {{ substr($horario->start_time, 0, 5) }}–{{ substr($horario->end_time, 0, 5) }}
+                                                        {{ \App\Support\FormatoHora::hora($horario->start_time) }}–{{ \App\Support\FormatoHora::hora($horario->end_time) }}
                                                         {{ $horario->is_break ? '· descanso' : '' }} ✕
                                                     </button>
                                                 </form>
@@ -310,22 +315,23 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Vacaciones, bloqueos y horarios extra</h3>
 
-                        <form method="POST" action="{{ route('exceptions.store', $profesionales->first()?->id ?? 0) }}" class="grid grid-cols-1 sm:grid-cols-7 gap-3 mb-6">
+                        <h4 class="text-sm font-bold text-petrol mb-2">Registrar excepción</h4>
+                        <form method="POST" action="{{ route('exceptions.store', $profesionales->first()?->id ?? 0) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                             @csrf
                             <select name="professional_id" x-model="profesional" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500" @change="sync(); this.form.action = '/professionals/' + this.value + '/exceptions'">
                                 @foreach ($profesionales as $profesional)
                                     <option value="{{ $profesional->id }}">{{ $profesional->name }}</option>
                                 @endforeach
                             </select>
-                            <select name="kind" class="border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
+                            <div><x-input-label value="Tipo" /><select name="kind" class="w-full mt-1 border-warm-300 rounded-xl text-sm focus:border-turquoise-500 focus:ring-turquoise-500">
                                 <option value="vacation">Vacaciones</option>
                                 <option value="block">Bloqueo</option>
                                 <option value="extra">Horario extra</option>
-                            </select>
-                            <x-text-input name="starts_on" type="date" class="w-full" required />
-                            <x-text-input name="ends_on" type="date" class="w-full" />
-                            <x-text-input name="start_time" type="time" class="w-full" />
-                            <x-text-input name="end_time" type="time" class="w-full" />
+                            </select></div>
+                            <div><x-input-label value="Desde (fecha) *" /><x-text-input name="starts_on" type="date" class="w-full mt-1" required /></div>
+                            <div><x-input-label value="Hasta (fecha)" /><x-text-input name="ends_on" type="date" class="w-full mt-1" /></div>
+                            <div><x-input-label value="Hora de inicio" /><x-text-input name="start_time" type="time" class="w-full mt-1" /></div>
+                            <div><x-input-label value="Hora de finalización" /><x-text-input name="end_time" type="time" class="w-full mt-1" /></div>
                             <x-primary-button class="justify-center">Agregar</x-primary-button>
                         </form>
 
@@ -358,13 +364,15 @@
                     <div class="p-6">
                         <h3 class="text-lg font-bold mb-4">Festivos del negocio</h3>
 
-                        <form method="POST" action="{{ route('holidays.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                        <h4 class="text-sm font-bold text-petrol mb-2">Agregar festivo</h4>
+                        <form method="POST" action="{{ route('holidays.store', $negocio) }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                             @csrf
-                            <x-text-input name="date" type="date" class="w-full" required />
-                            <x-text-input name="name" placeholder="Nombre del festivo (opcional)" class="w-full" />
+                            <div><x-input-label value="Fecha *" /><x-text-input name="date" type="date" class="w-full mt-1" required /></div>
+                            <div><x-input-label value="Nombre del festivo" /><x-text-input name="name" class="w-full mt-1" /></div>
                             <x-primary-button class="justify-center"><x-icon name="plus" class="w-4 h-4" />Agregar</x-primary-button>
                         </form>
 
+                        <h4 class="text-sm font-bold text-petrol mb-2">Listado de festivos</h4>
                         @if ($festivos->isEmpty())
                             <x-empty-state icon="calendar" title="Sin festivos configurados" message="Agrega los días festivos en los que el negocio no atenderá." />
                         @else

@@ -13,6 +13,7 @@ use App\Models\Professional;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\DisponibilidadService;
+use App\Support\FormatoHora;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -160,7 +161,7 @@ class AppointmentController extends Controller
             $appointment->business_id
         );
 
-        $this->notificarCita($appointment, 'Cita confirmada: '.$appointment->customer_name.', '.$appointment->starts_at.'.');
+        $this->notificarCita($appointment, 'Cita confirmada: '.$appointment->customer_name.', '.FormatoHora::fechaHora($appointment->starts_at).'.');
 
         return $this->respuesta($request, 'Reserva confirmada');
     }
@@ -189,7 +190,7 @@ class AppointmentController extends Controller
             $appointment->business_id
         );
 
-        $this->notificarCita($appointment, 'Cita cancelada: '.$appointment->customer_name.', '.$appointment->starts_at.'.');
+        $this->notificarCita($appointment, 'Cita cancelada: '.$appointment->customer_name.', '.FormatoHora::fechaHora($appointment->starts_at).'.');
 
         return $this->respuesta($request, 'Reserva cancelada');
     }
@@ -234,7 +235,7 @@ class AppointmentController extends Controller
             'pending_expires_at' => $pendiente ? $vencimiento->format('Y-m-d H:i:s') : null,
         ]);
 
-        $this->notificarCita($appointment, 'Cita reprogramada: '.$appointment->customer_name.', ahora '.$appointment->starts_at.'.');
+        $this->notificarCita($appointment, 'Cita reprogramada: '.$appointment->customer_name.', ahora '.FormatoHora::fechaHora($appointment->starts_at).'.');
 
         return $this->respuesta($request, 'Reserva reprogramada');
     }
