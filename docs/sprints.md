@@ -186,6 +186,10 @@ Commit: pendiente de registro en esta sección; pantallas Blade + Tailwind sobre
 - Resultado: **sin defectos del motor**; las 3 expectativas inicialmente fallidas eran erróneas en las pruebas (y fueron corregidas tras verificar que el motor se comporta correctamente: solapamientos con descansos y reservas previas, y confirmación manual en modo manual). Viglam no fue modificado y no se enviaron mensajes reales.
 - Pendientes para la prueba con Meta: envíos reales de WhatsApp (invitaciones/recordatorios), webhook con número comercial verificado, aprobación de plantillas UTILITY para avisos fuera de la ventana de 24 h, mapeo de Phone Number ID por negocio y pruebas de concurrencia reales con varias instancias.
 
+### Preparación de integración WhatsApp con Meta (2026-11-16)
+
+- Asociación número ↔ negocio verificada y endurecida (sin negocio global por defecto en producción); firma, idempotencia, aislamiento y conversación completa probados con pruebas simuladas (`Http::fake`), sin envíos reales ni publicación de Flows. Ver `docs/whatsapp-cloud-api.md` para el estado real con Meta y la configuración requerida.
+
 ## Pendientes para continuar
 
 1. Sprint 9 — Piloto comercial Viglam: requiere configuración productiva, número comercial habilitado, capacitación y acta de aceptación (acciones externas).
