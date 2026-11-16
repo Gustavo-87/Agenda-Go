@@ -16,7 +16,7 @@ class ReservaWhatsAppService
 {
     public function procesar(string $telefono, string $mensaje, ?int $businessId = null): string
     {
-        $businessId ??= Business::bookingChannelId();
+        $businessId ??= app()->isProduction() ? null : Business::bookingChannelId();
         $clave = 'reserva_whatsapp_'.$businessId.'_'.hash('sha256', $telefono);
         $estado = Cache::get($clave);
         $mensaje = trim($mensaje);
@@ -30,7 +30,7 @@ class ReservaWhatsAppService
         }
 
         if (! $estado || in_array(mb_strtolower($mensaje), ['hola', 'menu', 'menú', 'reiniciar', 'cancelar'])) {
-            $estado = ['paso' => 'profesional'];
+            $estado = ['paso' => 'profesional', 'business_id' => $businessId];
             Cache::put($clave, $estado, now()->addHours(2));
 
             return $this->menuProfesionales($businessId);
@@ -124,6 +124,7 @@ class ReservaWhatsAppService
                 try {
                     $respuestaApi = app(AppointmentController::class)->store(
                         Request::create('/api/appointments', 'POST', [
+                            'business_id' => $businessId,
                             'professional_id' => $estado['profesional_id'],
                             'service_id' => $estado['servicio_id'],
                             'customer_name' => $estado['nombre'],
@@ -244,6 +245,7 @@ class ReservaWhatsAppService
     {
         $respuesta = app(AppointmentController::class)->availability(
             Request::create('/api/availability', 'GET', [
+                'business_id' => $estado['business_id'] ?? null,
                 'professional_id' => $estado['profesional_id'],
                 'service_id' => $estado['servicio_id'],
                 'date' => $fecha,

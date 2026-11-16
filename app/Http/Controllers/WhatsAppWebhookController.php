@@ -78,7 +78,24 @@ class WhatsAppWebhookController extends Controller
 
                     $business = Business::query()
                         ->where('whatsapp_phone_number_id', $change['value']['metadata']['phone_number_id'] ?? null)
-                        ->first() ?? Business::find(Business::bookingChannelId());
+                        ->first();
+
+                    if ($business === null && ! app()->isProduction()) {
+                        $business = Business::find(Business::bookingChannelId());
+                    }
+
+                    if ($business === null) {
+                        WhatsAppMessage::create([
+                            'business_id' => null,
+                            'wa_message_id' => $waMessageId,
+                            'direction' => 'inbound',
+                            'phone' => $phone,
+                            'body' => $message['text']['body'] ?? null,
+                            'status' => 'ignored',
+                        ]);
+
+                        continue;
+                    }
 
                     $registro = WhatsAppMessage::create([
                         'business_id' => $business?->id,

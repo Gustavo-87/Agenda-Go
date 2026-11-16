@@ -30,11 +30,13 @@ class AppointmentController extends Controller
             'professional_id' => 'required|exists:professionals,id',
             'service_id' => 'required|exists:services,id',
             'date' => 'required|date_format:Y-m-d',
+            'business_id' => ['sometimes', 'integer', 'exists:businesses,id'],
         ]);
 
         [$professional, $service] = $this->recursoDelCanal(
             (int) $data['professional_id'],
-            (int) $data['service_id']
+            (int) $data['service_id'],
+            isset($data['business_id']) ? (int) $data['business_id'] : null
         );
 
         if (! $service->active || $service->duration_minutes < 1) {
@@ -54,11 +56,13 @@ class AppointmentController extends Controller
             'customer_name' => 'required|string|max:120',
             'customer_phone' => 'required|string|max:30',
             'starts_at' => 'required|date_format:Y-m-d H:i:s',
+            'business_id' => ['sometimes', 'integer', 'exists:businesses,id'],
         ]);
 
         [$professional, $service] = $this->recursoDelCanal(
             (int) $data['professional_id'],
-            (int) $data['service_id']
+            (int) $data['service_id'],
+            isset($data['business_id']) ? (int) $data['business_id'] : null
         );
 
         if (! $service->active || ! $professional->active || $service->duration_minutes < 1) {
@@ -313,9 +317,9 @@ class AppointmentController extends Controller
      *
      * @return array{0: Professional, 1: Service}
      */
-    private function recursoDelCanal(int $professionalId, int $serviceId): array
+    private function recursoDelCanal(int $professionalId, int $serviceId, ?int $businessEsperado = null): array
     {
-        $businessId = Business::bookingChannelId();
+        $businessId = $businessEsperado ?? Business::bookingChannelId();
 
         $professional = Professional::find($professionalId);
 

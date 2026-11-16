@@ -19,7 +19,7 @@ class FlujoReservasService
      */
     private function canalId(): ?int
     {
-        return $this->businessId ??= Business::bookingChannelId();
+        return $this->businessId ??= app()->isProduction() ? null : Business::bookingChannelId();
     }
 
     public function procesar(array $solicitud, ?int $businessId = null): array
@@ -88,6 +88,7 @@ class FlujoReservasService
             try {
                 $respuesta = app(AppointmentController::class)->store(
                     Request::create('/api/appointments', 'POST', [
+                        'business_id' => $this->canalId(),
                         'professional_id' => $profesional,
                         'service_id' => $servicio,
                         'customer_name' => $nombre,
@@ -133,6 +134,7 @@ class FlujoReservasService
         try {
             $respuesta = app(AppointmentController::class)->availability(
                 Request::create('/api/availability', 'GET', [
+                    'business_id' => $this->canalId(),
                     'professional_id' => $profesional,
                     'service_id' => $servicio,
                     'date' => $fecha,
